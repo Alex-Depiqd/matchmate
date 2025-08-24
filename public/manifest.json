@@ -1,0 +1,18 @@
+{
+  "name": "Match Mate - Betting Tracker",
+  "short_name": "Match Mate",
+  "description": "Track your matched betting activities, profits, and seed repayment progress",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
