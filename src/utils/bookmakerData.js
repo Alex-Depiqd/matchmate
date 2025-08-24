@@ -50,14 +50,16 @@ export const UK_BOOKMAKERS = [
   { name: 'Virgin Bet', category: 'Major' },
   { name: 'William Hill', category: 'Major' },
   { name: 'Youwin', category: 'Major' },
-  { name: 'Betzone', category: 'Major' }
+  { name: 'Betzone', category: 'Major' },
+  { name: 'Custom...', category: 'Custom' }
 ];
 
 export const UK_EXCHANGES = [
   { name: 'Betdaq', category: 'Exchange', defaultCommission: 0.0 },
   { name: 'Betfair Exchange', category: 'Exchange', defaultCommission: 5.0 },
   { name: 'Matchbook', category: 'Exchange', defaultCommission: 0.0 },
-  { name: 'Smarkets', category: 'Exchange', defaultCommission: 0.0 }
+  { name: 'Smarkets', category: 'Exchange', defaultCommission: 0.0 },
+  { name: 'Custom...', category: 'Custom' }
 ];
 
 // Helper function to get all bookmakers and exchanges

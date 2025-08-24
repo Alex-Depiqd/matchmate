@@ -58,14 +58,14 @@ export const dataManager = {
     if (bookmakers === null || bookmakers.length === 0) {
       // Initialize with default bookmakers if none exist or if empty array
       const defaultBookmakers = [
-        { id: '1', name: 'Bet365', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://www.bet365.com', category: 'Major', createdAt: new Date().toISOString() },
-        { id: '2', name: 'William Hill', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.williamhill.com', category: 'Major', createdAt: new Date().toISOString() },
-        { id: '3', name: 'Ladbrokes', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.ladbrokes.com', category: 'Major', createdAt: new Date().toISOString() },
-        { id: '4', name: 'Coral', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.coral.co.uk', category: 'Major', createdAt: new Date().toISOString() },
-        { id: '5', name: 'Paddy Power', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.paddypower.com', category: 'Major', createdAt: new Date().toISOString() },
-        { id: '6', name: 'Sky Bet', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://m.skybet.com', category: 'Major', createdAt: new Date().toISOString() },
-        { id: '7', name: 'Betfair Sportsbook', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.betfair.com', category: 'Major', createdAt: new Date().toISOString() },
-        { id: '8', name: 'Unibet', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://www.unibet.co.uk', category: 'Major', createdAt: new Date().toISOString() }
+        { id: 'bm_default_1', name: 'Bet365', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://www.bet365.com', category: 'Major', createdAt: new Date().toISOString() },
+        { id: 'bm_default_2', name: 'William Hill', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.williamhill.com', category: 'Major', createdAt: new Date().toISOString() },
+        { id: 'bm_default_3', name: 'Ladbrokes', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.ladbrokes.com', category: 'Major', createdAt: new Date().toISOString() },
+        { id: 'bm_default_4', name: 'Coral', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.coral.co.uk', category: 'Major', createdAt: new Date().toISOString() },
+        { id: 'bm_default_5', name: 'Paddy Power', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.paddypower.com', category: 'Major', createdAt: new Date().toISOString() },
+        { id: 'bm_default_6', name: 'Sky Bet', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://m.skybet.com', category: 'Major', createdAt: new Date().toISOString() },
+        { id: 'bm_default_7', name: 'Betfair Sportsbook', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://sports.betfair.com', category: 'Major', createdAt: new Date().toISOString() },
+        { id: 'bm_default_8', name: 'Unibet', totalDeposits: 0, currentBalance: 0, commission: 0, notes: '', website: 'https://www.unibet.co.uk', category: 'Major', createdAt: new Date().toISOString() }
       ];
       storage.set(STORAGE_KEYS.BOOKMAKERS, defaultBookmakers);
       return defaultBookmakers;
@@ -76,7 +76,7 @@ export const dataManager = {
   addBookmaker: (bookmaker) => {
     const bookmakers = dataManager.getBookmakers();
     const newBookmaker = {
-      id: Date.now().toString(),
+      id: bookmaker.id || `bm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: bookmaker.name,
       totalDeposits: bookmaker.totalDeposits || 0,
       currentBalance: bookmaker.currentBalance || 0,
@@ -107,10 +107,10 @@ export const dataManager = {
     if (exchanges === null || exchanges.length === 0) {
       // Initialize with default exchanges if none exist or if empty array
       const defaultExchanges = [
-        { id: '1', name: 'Betfair Exchange', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 5.0, notes: '', website: 'https://www.betfair.com', category: 'Exchange', createdAt: new Date().toISOString() },
-        { id: '2', name: 'Smarkets', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 2.0, notes: '', website: 'https://smarkets.com', category: 'Exchange', createdAt: new Date().toISOString() },
-        { id: '3', name: 'Betdaq', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 5.0, notes: '', website: 'https://www.betdaq.com', category: 'Exchange', createdAt: new Date().toISOString() },
-        { id: '4', name: 'Matchbook', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 1.0, notes: '', website: 'https://www.matchbook.com', category: 'Exchange', createdAt: new Date().toISOString() }
+        { id: 'ex_default_1', name: 'Betfair Exchange', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 5.0, notes: '', website: 'https://www.betfair.com', category: 'Exchange', createdAt: new Date().toISOString() },
+        { id: 'ex_default_2', name: 'Smarkets', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 2.0, notes: '', website: 'https://smarkets.com', category: 'Exchange', createdAt: new Date().toISOString() },
+        { id: 'ex_default_3', name: 'Betdaq', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 5.0, notes: '', website: 'https://www.betdaq.com', category: 'Exchange', createdAt: new Date().toISOString() },
+        { id: 'ex_default_4', name: 'Matchbook', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 1.0, notes: '', website: 'https://www.matchbook.com', category: 'Exchange', createdAt: new Date().toISOString() }
       ];
       storage.set(STORAGE_KEYS.EXCHANGES, defaultExchanges);
       return defaultExchanges;
@@ -121,7 +121,7 @@ export const dataManager = {
   addExchange: (exchange) => {
     const exchanges = dataManager.getExchanges();
     const newExchange = {
-      id: Date.now().toString(),
+      id: exchange.id || `ex_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: exchange.name,
       totalDeposits: exchange.totalDeposits || 0,
       currentBalance: exchange.currentBalance || 0,
