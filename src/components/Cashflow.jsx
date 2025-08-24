@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { dataManager } from '../utils/storage';
 import { formatCurrency } from '../utils/calculations';
+import { UK_BOOKMAKERS, UK_EXCHANGES, searchProviders } from '../utils/bookmakerData';
 
 // Custom Dropdown Component (reusing from AddBet)
 const CustomDropdown = ({ label, value, onChange, options, error, placeholder, fieldName }) => {
@@ -51,13 +52,17 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
   const [activeTab, setActiveTab] = useState('bookmakers');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [isWorkflowGuideCollapsed, setIsWorkflowGuideCollapsed] = useState(false);
   const [formData, setFormData] = useState({
     type: 'bookmaker', // 'bookmaker' or 'exchange'
     name: '',
     action: 'deposit', // 'deposit' or 'withdrawal'
     amount: '',
     balance: '',
-    exposure: '' // Only for exchanges
+    exposure: '', // Only for exchanges
+    commission: '',
+    notes: '',
+    website: ''
   });
 
   const handleInputChange = (e) => {
@@ -72,7 +77,10 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       action: 'deposit',
       amount: '',
       balance: '',
-      exposure: ''
+      exposure: '',
+      commission: '',
+      notes: '',
+      website: ''
     });
     setEditingItem(null);
   };
@@ -97,10 +105,19 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
           ? existingBookmaker.currentBalance + amount
           : balance;
 
-        dataManager.updateBookmaker(existingBookmaker.id, {
+        const updateData = {
           totalDeposits: newTotalDeposits,
           currentBalance: newBalance
-        });
+        };
+
+        // Add additional fields if editing
+        if (editingItem) {
+          updateData.commission = parseFloat(formData.commission) || 0;
+          updateData.notes = formData.notes;
+          updateData.website = formData.website;
+        }
+
+        dataManager.updateBookmaker(existingBookmaker.id, updateData);
       } else {
         // Add new bookmaker
         dataManager.addBookmaker({
@@ -122,11 +139,20 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
           ? existingExchange.currentBalance + amount
           : balance;
 
-        dataManager.updateExchange(existingExchange.id, {
+        const updateData = {
           totalDeposits: newTotalDeposits,
           currentBalance: newBalance,
           exposure: editingItem ? exposure : existingExchange.exposure
-        });
+        };
+
+        // Add additional fields if editing
+        if (editingItem) {
+          updateData.commission = parseFloat(formData.commission) || 0;
+          updateData.notes = formData.notes;
+          updateData.website = formData.website;
+        }
+
+        dataManager.updateExchange(existingExchange.id, updateData);
       } else {
         // Add new exchange
         dataManager.addExchange({
@@ -151,9 +177,12 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       action: 'withdrawal',
       amount: '',
       balance: item.currentBalance.toString(),
-      exposure: type === 'exchange' ? (item.exposure || 0).toString() : ''
+      exposure: type === 'exchange' ? (item.exposure || 0).toString() : '',
+      commission: (item.commission || 0).toString(),
+      notes: item.notes || '',
+      website: item.website || ''
     });
-    setShowAddForm(true);
+    setShowAddForm('transaction');
   };
 
   const totalBookmakerDeposits = bookmakers.reduce((sum, bm) => sum + (bm.totalDeposits || 0), 0);
@@ -165,20 +194,41 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <h2 className="text-2xl font-bold text-gray-900">Cashflow</h2>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="btn-primary"
-        >
-          Add Transaction
-        </button>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+          <button
+            onClick={() => setShowAddForm('new-provider')}
+            className="btn-secondary w-full sm:w-auto px-4 py-3 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+          >
+            Add Provider
+          </button>
+          <button
+            onClick={() => setShowAddForm('transaction')}
+            className="btn-primary w-full sm:w-auto px-4 py-3 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+          >
+            Add Transaction
+          </button>
+        </div>
       </div>
 
       {/* Workflow Guidance */}
       <div className="card bg-blue-50 border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">💡 Workflow Guide</h3>
-        <div className="text-sm text-blue-800 space-y-1">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-lg font-semibold text-blue-900">💡 Workflow Guide</h3>
+          <button
+            onClick={() => setIsWorkflowGuideCollapsed(!isWorkflowGuideCollapsed)}
+            className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+            aria-label={isWorkflowGuideCollapsed ? "Expand workflow guide" : "Collapse workflow guide"}
+          >
+            {isWorkflowGuideCollapsed ? '▼' : '▲'}
+          </button>
+        </div>
+        <div 
+          className={`text-sm text-blue-800 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${
+            isWorkflowGuideCollapsed ? 'max-h-0 opacity-0' : 'max-h-32 opacity-100'
+          }`}
+        >
           <p>1. <strong>Record deposits</strong> before placing bets to track your funds</p>
           <p>2. <strong>Update balances</strong> regularly to maintain accurate positions</p>
           <p>3. <strong>Track exposure</strong> on exchanges to monitor your liability</p>
@@ -273,17 +323,36 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
           ) : (
             bookmakers.map((bookmaker) => (
               <div key={bookmaker.id} className="card">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{bookmaker.name}</h4>
-                    <div className="text-sm text-gray-500 mt-1">
-                      Deposits: {formatCurrency(bookmaker.totalDeposits)} • 
-                      Balance: {formatCurrency(bookmaker.currentBalance)}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-3 sm:space-y-0">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h4 className="font-semibold text-gray-900">{bookmaker.name}</h4>
+                      {bookmaker.commission > 0 && (
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          {bookmaker.commission}% commission
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500 space-y-1">
+                      <div className="flex flex-col sm:flex-row sm:gap-4">
+                        <span>Deposits: {formatCurrency(bookmaker.totalDeposits)}</span>
+                        <span>Balance: {formatCurrency(bookmaker.currentBalance)}</span>
+                      </div>
+                      {bookmaker.website && (
+                        <div>
+                          <a href={bookmaker.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            Visit Website →
+                          </a>
+                        </div>
+                      )}
+                      {bookmaker.notes && (
+                        <div className="text-xs text-gray-600 italic">"{bookmaker.notes}"</div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                     <div className="text-right">
-                      <div className={`font-medium ${
+                      <div className={`font-medium text-lg ${
                         bookmaker.currentBalance >= bookmaker.totalDeposits ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatCurrency(bookmaker.currentBalance - bookmaker.totalDeposits)}
@@ -294,7 +363,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                     </div>
                     <button
                       onClick={() => handleEdit(bookmaker, 'bookmaker')}
-                      className="btn-secondary text-sm px-3 py-1"
+                      className="btn-secondary text-sm px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 w-full sm:w-auto"
                     >
                       Edit
                     </button>
@@ -311,18 +380,37 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
           ) : (
             exchanges.map((exchange) => (
               <div key={exchange.id} className="card">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{exchange.name}</h4>
-                    <div className="text-sm text-gray-500 mt-1">
-                      Deposits: {formatCurrency(exchange.totalDeposits)} • 
-                      Balance: {formatCurrency(exchange.currentBalance)} • 
-                      Exposure: {formatCurrency(exchange.exposure || 0)}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-3 sm:space-y-0">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h4 className="font-semibold text-gray-900">{exchange.name}</h4>
+                      {exchange.commission > 0 && (
+                        <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                          {exchange.commission}% commission
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500 space-y-1">
+                      <div className="flex flex-col sm:flex-row sm:gap-4">
+                        <span>Deposits: {formatCurrency(exchange.totalDeposits)}</span>
+                        <span>Balance: {formatCurrency(exchange.currentBalance)}</span>
+                        <span>Exposure: {formatCurrency(exchange.exposure || 0)}</span>
+                      </div>
+                      {exchange.website && (
+                        <div>
+                          <a href={exchange.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            Visit Website →
+                          </a>
+                        </div>
+                      )}
+                      {exchange.notes && (
+                        <div className="text-xs text-gray-600 italic">"{exchange.notes}"</div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                     <div className="text-right">
-                      <div className={`font-medium ${
+                      <div className={`font-medium text-lg ${
                         exchange.currentBalance >= exchange.totalDeposits ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatCurrency(exchange.currentBalance - exchange.totalDeposits)}
@@ -333,7 +421,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                     </div>
                     <button
                       onClick={() => handleEdit(exchange, 'exchange')}
-                      className="btn-secondary text-sm px-3 py-1"
+                      className="btn-secondary text-sm px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 w-full sm:w-auto"
                     >
                       Edit
                     </button>
@@ -346,7 +434,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       </div>
 
       {/* Add/Edit Transaction Modal */}
-      {showAddForm && (
+      {showAddForm === 'transaction' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -468,22 +556,224 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                 </div>
               )}
 
-              <div className="flex justify-end space-x-3 pt-4">
+              {/* Additional fields when editing */}
+              {editingItem && (
+                <>
+                  <div>
+                    <label className="label">Commission Rate (%)</label>
+                    <input
+                      type="number"
+                      name="commission"
+                      value={formData.commission}
+                      onChange={handleInputChange}
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      placeholder="0.0"
+                      className="input min-h-[44px] text-base"
+                      style={{ fontSize: '16px' }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.type === 'exchange' ? 'Exchange commission rate' : 'Bookmaker commission/fees'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="label">Website URL</label>
+                    <input
+                      type="url"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleInputChange}
+                      placeholder="https://example.com"
+                      className="input min-h-[44px] text-base"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Notes</label>
+                    <textarea
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleInputChange}
+                      placeholder="Any additional notes..."
+                      className="input min-h-[80px] text-base resize-none"
+                      style={{ fontSize: '16px' }}
+                      rows="3"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowAddForm(false);
                     resetForm();
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary w-full sm:w-auto px-4 py-3 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="btn-primary w-full sm:w-auto px-4 py-3 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
                 >
                   {editingItem ? 'Update' : 'Add Transaction'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Provider Modal */}
+      {showAddForm === 'new-provider' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Provider</h3>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const amount = parseFloat(formData.amount) || 0;
+              
+              if (formData.type === 'bookmaker') {
+                dataManager.addBookmaker({
+                  name: formData.name,
+                  totalDeposits: amount,
+                  currentBalance: amount,
+                  commission: parseFloat(formData.commission) || 0,
+                  notes: formData.notes,
+                  website: formData.website,
+                  category: 'Major'
+                });
+              } else {
+                dataManager.addExchange({
+                  name: formData.name,
+                  totalDeposits: amount,
+                  currentBalance: amount,
+                  exposure: 0,
+                  commission: parseFloat(formData.commission) || 0,
+                  notes: formData.notes,
+                  website: formData.website,
+                  category: 'Exchange'
+                });
+              }
+              
+              resetForm();
+              setShowAddForm(false);
+              onRefresh();
+            }} className="space-y-4">
+              
+              <div>
+                <label className="label">Provider Type</label>
+                <CustomDropdown
+                  label=""
+                  value={formData.type === 'bookmaker' ? 'Bookmaker' : 'Exchange'}
+                  onChange={handleInputChange}
+                  options={[
+                    { value: 'bookmaker', label: 'Bookmaker' },
+                    { value: 'exchange', label: 'Exchange' }
+                  ]}
+                  placeholder="Select Type"
+                  fieldName="type"
+                />
+              </div>
+
+              <div>
+                <label className="label">Select from UK List</label>
+                <CustomDropdown
+                  label=""
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  options={formData.type === 'bookmaker' 
+                    ? UK_BOOKMAKERS.map(bm => ({ value: bm.name, label: bm.name }))
+                    : UK_EXCHANGES.map(ex => ({ value: ex.name, label: `${ex.name} (${ex.defaultCommission}% commission)` }))
+                  }
+                  placeholder={`Select ${formData.type}`}
+                  fieldName="name"
+                />
+              </div>
+
+              <div>
+                <label className="label">Initial Deposit (£)</label>
+                <input
+                  type="number"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleInputChange}
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  className="input min-h-[44px] text-base"
+                  style={{ fontSize: '16px' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="label">Commission Rate (%)</label>
+                <input
+                  type="number"
+                  name="commission"
+                  value={formData.commission}
+                  onChange={handleInputChange}
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  placeholder="0.0"
+                  className="input min-h-[44px] text-base"
+                  style={{ fontSize: '16px' }}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.type === 'exchange' ? 'Exchange commission rate' : 'Bookmaker commission/fees'}
+                </p>
+              </div>
+
+              <div>
+                <label className="label">Website URL</label>
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com"
+                  className="input min-h-[44px] text-base"
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+
+              <div>
+                <label className="label">Notes</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  placeholder="Any additional notes..."
+                  className="input min-h-[80px] text-base resize-none"
+                  style={{ fontSize: '16px' }}
+                  rows="3"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddForm(false);
+                    resetForm();
+                  }}
+                  className="btn-secondary w-full sm:w-auto px-4 py-3 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary w-full sm:w-auto px-4 py-3 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                >
+                  Add Provider
                 </button>
               </div>
             </form>

@@ -27,6 +27,34 @@ export const calculateBetProfit = (bet) => {
   return 0;
 };
 
+// Calculate profit/loss for a bet with commission
+export const calculateBetProfitWithCommission = (bet, bookmakers, exchanges) => {
+  if (bet.status === 'unsettled') return 0;
+  
+  // Find the bookmaker and exchange to get their commission rates
+  const bookmaker = bookmakers.find(bm => bm.name === bet.bookmaker);
+  const exchange = exchanges.find(ex => ex.name === bet.exchange);
+  
+  const bookmakerCommission = bookmaker ? (bookmaker.commission || 0) / 100 : 0;
+  const exchangeCommission = exchange ? (exchange.commission || 0) / 100 : 0;
+  
+  if (bet.status === 'back_won') {
+    const backWinnings = (bet.backStake * bet.backOdds) - bet.backStake;
+    const backCommission = backWinnings * bookmakerCommission;
+    const layLoss = bet.liability;
+    const layCommission = bet.layStake * exchangeCommission;
+    return (backWinnings - backCommission - layLoss - layCommission).toFixed(2);
+  } else if (bet.status === 'lay_won') {
+    const backLoss = bet.backStake;
+    const backCommission = 0; // No commission on losses
+    const layWinnings = bet.layStake;
+    const layCommission = layWinnings * exchangeCommission;
+    return (layWinnings - layCommission - backLoss - backCommission).toFixed(2);
+  }
+  
+  return 0;
+};
+
 // Calculate total deposits
 export const calculateTotalDeposits = (bookmakers, exchanges) => {
   const bookmakerDeposits = bookmakers.reduce((sum, b) => sum + (b.totalDeposits || 0), 0);
@@ -49,6 +77,41 @@ export const calculateSettledProfit = (bets) => {
   return bets
     .filter(bet => bet.status !== 'unsettled')
     .reduce((sum, bet) => sum + parseFloat(bet.netProfit || 0), 0)
+    .toFixed(2);
+};
+
+// Calculate settled profit with commission
+export const calculateSettledProfitWithCommission = (bets, bookmakers, exchanges) => {
+  return bets
+    .filter(bet => bet.status !== 'unsettled')
+    .reduce((sum, bet) => sum + parseFloat(calculateBetProfitWithCommission(bet, bookmakers, exchanges)), 0)
+    .toFixed(2);
+};
+
+// Calculate total commission paid
+export const calculateTotalCommission = (bets, bookmakers, exchanges) => {
+  return bets
+    .filter(bet => bet.status !== 'unsettled')
+    .reduce((sum, bet) => {
+      const bookmaker = bookmakers.find(bm => bm.name === bet.bookmaker);
+      const exchange = exchanges.find(ex => ex.name === bet.exchange);
+      
+      const bookmakerCommission = bookmaker ? (bookmaker.commission || 0) / 100 : 0;
+      const exchangeCommission = exchange ? (exchange.commission || 0) / 100 : 0;
+      
+      let commission = 0;
+      
+      if (bet.status === 'back_won') {
+        const backWinnings = (bet.backStake * bet.backOdds) - bet.backStake;
+        commission += backWinnings * bookmakerCommission;
+        commission += bet.layStake * exchangeCommission;
+      } else if (bet.status === 'lay_won') {
+        const layWinnings = bet.layStake;
+        commission += layWinnings * exchangeCommission;
+      }
+      
+      return sum + commission;
+    }, 0)
     .toFixed(2);
 };
 
