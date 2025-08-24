@@ -53,6 +53,9 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [isWorkflowGuideCollapsed, setIsWorkflowGuideCollapsed] = useState(false);
+  const [sortBy, setSortBy] = useState('name'); // 'name', 'deposits', 'netPosition'
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc', 'desc'
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [formData, setFormData] = useState({
     type: 'bookmaker', // 'bookmaker' or 'exchange'
     name: '',
@@ -97,13 +100,16 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       
       if (existingBookmaker) {
         // Update existing bookmaker
-        const newTotalDeposits = formData.action === 'deposit' 
-          ? existingBookmaker.totalDeposits + amount
-          : existingBookmaker.totalDeposits;
+        let newTotalDeposits = existingBookmaker.totalDeposits;
+        let newBalance = existingBookmaker.currentBalance;
         
-        const newBalance = formData.action === 'deposit'
-          ? existingBookmaker.currentBalance + amount
-          : balance;
+        if (formData.action === 'deposit') {
+          newTotalDeposits += amount;
+          newBalance += amount;
+        } else {
+          // For withdrawal/update balance, only update the balance
+          newBalance = parseFloat(balance);
+        }
 
         const updateData = {
           totalDeposits: newTotalDeposits,
@@ -123,7 +129,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         dataManager.addBookmaker({
           name: formData.name,
           totalDeposits: formData.action === 'deposit' ? amount : 0,
-          currentBalance: formData.action === 'deposit' ? amount : balance
+          currentBalance: formData.action === 'deposit' ? amount : parseFloat(balance)
         });
       }
     } else {
@@ -131,18 +137,21 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       
       if (existingExchange) {
         // Update existing exchange
-        const newTotalDeposits = formData.action === 'deposit' 
-          ? existingExchange.totalDeposits + amount
-          : existingExchange.totalDeposits;
+        let newTotalDeposits = existingExchange.totalDeposits;
+        let newBalance = existingExchange.currentBalance;
         
-        const newBalance = formData.action === 'deposit'
-          ? existingExchange.currentBalance + amount
-          : balance;
+        if (formData.action === 'deposit') {
+          newTotalDeposits += amount;
+          newBalance += amount;
+        } else {
+          // For withdrawal/update balance, only update the balance
+          newBalance = parseFloat(balance);
+        }
 
         const updateData = {
           totalDeposits: newTotalDeposits,
           currentBalance: newBalance,
-          exposure: editingItem ? exposure : existingExchange.exposure
+          exposure: editingItem ? parseFloat(exposure) : existingExchange.exposure
         };
 
         // Add additional fields if editing
@@ -158,8 +167,8 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         dataManager.addExchange({
           name: formData.name,
           totalDeposits: formData.action === 'deposit' ? amount : 0,
-          currentBalance: formData.action === 'deposit' ? amount : balance,
-          exposure: exposure
+          currentBalance: formData.action === 'deposit' ? amount : parseFloat(balance),
+          exposure: parseFloat(exposure)
         });
       }
     }
@@ -190,6 +199,40 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
   const totalExchangeDeposits = exchanges.reduce((sum, ex) => sum + (ex.totalDeposits || 0), 0);
   const totalExchangeBalances = exchanges.reduce((sum, ex) => sum + (ex.currentBalance || 0), 0);
   const totalExposure = exchanges.reduce((sum, ex) => sum + (ex.exposure || 0), 0);
+
+  // Sorting function
+  const sortProviders = (providers) => {
+    return [...providers].sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'deposits':
+          aValue = a.totalDeposits || 0;
+          bValue = b.totalDeposits || 0;
+          break;
+        case 'netPosition':
+          aValue = (a.currentBalance || 0) - (a.totalDeposits || 0);
+          bValue = (b.currentBalance || 0) - (b.totalDeposits || 0);
+          break;
+        default:
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  };
+
+  const sortedBookmakers = sortProviders(bookmakers);
+  const sortedExchanges = sortProviders(exchanges);
 
   return (
     <div className="space-y-6">
@@ -287,41 +330,95 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs and Sorting */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('bookmakers')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'bookmakers'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Bookmakers ({bookmakers.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('exchanges')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'exchanges'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Exchanges ({exchanges.length})
-          </button>
-        </nav>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('bookmakers')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'bookmakers'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Bookmakers ({bookmakers.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('exchanges')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'exchanges'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Exchanges ({exchanges.length})
+            </button>
+          </nav>
+          
+          {/* Sorting Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+            <label className="text-sm font-medium text-gray-700">Sort by:</label>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <button
+                  onClick={() => setShowSortDropdown(!showSortDropdown)}
+                  className="text-base border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-h-[44px] w-full sm:w-auto flex items-center justify-between"
+                  style={{ fontSize: '16px' }}
+                >
+                  <span>
+                    {sortBy === 'name' ? 'Name' : 
+                     sortBy === 'deposits' ? 'Deposits' : 
+                     sortBy === 'netPosition' ? 'Net Position' : 'Name'}
+                  </span>
+                  <span className="ml-2">▼</span>
+                </button>
+                
+                {showSortDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                    <div className="py-1">
+                      {[
+                        { value: 'name', label: 'Name' },
+                        { value: 'deposits', label: 'Deposits' },
+                        { value: 'netPosition', label: 'Net Position' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSortBy(option.value);
+                            setShowSortDropdown(false);
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0 text-base"
+                          style={{ fontSize: '16px' }}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="text-base text-gray-600 hover:text-gray-800 bg-white border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] min-w-[44px] flex items-center justify-center"
+                style={{ fontSize: '16px' }}
+              >
+                {sortOrder === 'asc' ? '↑' : '↓'}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Content */}
       <div className="space-y-4">
         {activeTab === 'bookmakers' ? (
-          bookmakers.length === 0 ? (
+          sortedBookmakers.length === 0 ? (
             <div className="card">
               <p className="text-gray-500 text-center py-8">No bookmakers added yet. Add your first deposit to get started!</p>
             </div>
           ) : (
-            bookmakers.map((bookmaker) => (
+            sortedBookmakers.map((bookmaker) => (
               <div key={bookmaker.id} className="card">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-3 sm:space-y-0">
                   <div className="flex-1">
@@ -373,12 +470,12 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
             ))
           )
         ) : (
-          exchanges.length === 0 ? (
+          sortedExchanges.length === 0 ? (
             <div className="card">
               <p className="text-gray-500 text-center py-8">No exchanges added yet. Add your first deposit to get started!</p>
             </div>
           ) : (
-            exchanges.map((exchange) => (
+            sortedExchanges.map((exchange) => (
               <div key={exchange.id} className="card">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-3 sm:space-y-0">
                   <div className="flex-1">
@@ -669,32 +766,40 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
               
               <div>
                 <label className="label">Provider Type</label>
-                <CustomDropdown
-                  label=""
-                  value={formData.type === 'bookmaker' ? 'Bookmaker' : 'Exchange'}
+                <select
+                  name="type"
+                  value={formData.type}
                   onChange={handleInputChange}
-                  options={[
-                    { value: 'bookmaker', label: 'Bookmaker' },
-                    { value: 'exchange', label: 'Exchange' }
-                  ]}
-                  placeholder="Select Type"
-                  fieldName="type"
-                />
+                  className="w-full px-6 py-4 text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-h-[56px] text-lg"
+                  style={{ fontSize: '18px' }}
+                  required
+                >
+                  <option value="">Select Type</option>
+                  <option value="bookmaker">Bookmaker</option>
+                  <option value="exchange">Exchange</option>
+                </select>
               </div>
 
               <div>
                 <label className="label">Select from UK List</label>
-                <CustomDropdown
-                  label=""
+                <select
+                  name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  options={formData.type === 'bookmaker' 
-                    ? UK_BOOKMAKERS.map(bm => ({ value: bm.name, label: bm.name }))
-                    : UK_EXCHANGES.map(ex => ({ value: ex.name, label: `${ex.name} (${ex.defaultCommission}% commission)` }))
-                  }
-                  placeholder={`Select ${formData.type}`}
-                  fieldName="name"
-                />
+                  className="w-full px-6 py-4 text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-h-[56px] text-lg"
+                  style={{ fontSize: '18px' }}
+                  required
+                >
+                  <option value="">{`Select ${formData.type}`}</option>
+                  {(formData.type === 'bookmaker' ? UK_BOOKMAKERS : UK_EXCHANGES).map((provider) => (
+                    <option key={provider.name} value={provider.name}>
+                      {formData.type === 'bookmaker' 
+                        ? provider.name 
+                        : `${provider.name} (${provider.defaultCommission}% commission)`
+                      }
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
