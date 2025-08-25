@@ -81,32 +81,37 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
 
   // Check balances when bookmaker/exchange/stake changes
   useEffect(() => {
-    const warnings = {};
-    
-    // Only check bookmaker balance if it's NOT a free bet
-    if (formData.bookmaker && formData.backStake && formData.type !== 'free') {
-      const bookmaker = bookmakers.find(bm => bm.name === formData.bookmaker);
-      if (bookmaker && parseFloat(formData.backStake) > bookmaker.currentBalance) {
-        warnings.bookmaker = {
-          required: parseFloat(formData.backStake),
-          available: bookmaker.currentBalance,
-          shortfall: parseFloat(formData.backStake) - bookmaker.currentBalance
-        };
+    try {
+      const warnings = {};
+      
+      // Only check bookmaker balance if it's NOT a free bet
+      if (formData.bookmaker && formData.backStake && formData.type !== 'free') {
+        const bookmaker = bookmakers.find(bm => bm.name === formData.bookmaker);
+        if (bookmaker && parseFloat(formData.backStake) > (bookmaker.currentBalance || 0)) {
+          warnings.bookmaker = {
+            required: parseFloat(formData.backStake),
+            available: bookmaker.currentBalance || 0,
+            shortfall: parseFloat(formData.backStake) - (bookmaker.currentBalance || 0)
+          };
+        }
       }
-    }
-    
-    if (formData.exchange && formData.liability) {
-      const exchange = exchanges.find(ex => ex.name === formData.exchange);
-      if (exchange && parseFloat(formData.liability) > exchange.currentBalance) {
-        warnings.exchange = {
-          required: parseFloat(formData.liability),
-          available: exchange.currentBalance,
-          shortfall: parseFloat(formData.liability) - exchange.currentBalance
-        };
+      
+      if (formData.exchange && formData.liability) {
+        const exchange = exchanges.find(ex => ex.name === formData.exchange);
+        if (exchange && parseFloat(formData.liability) > (exchange.currentBalance || 0)) {
+          warnings.exchange = {
+            required: parseFloat(formData.liability),
+            available: exchange.currentBalance || 0,
+            shortfall: parseFloat(formData.liability) - (exchange.currentBalance || 0)
+          };
+        }
       }
+      
+      setBalanceWarnings(warnings);
+    } catch (error) {
+      console.error('Error checking balances:', error);
+      setBalanceWarnings({});
     }
-    
-    setBalanceWarnings(warnings);
   }, [formData.bookmaker, formData.exchange, formData.backStake, formData.liability, bookmakers, exchanges, formData.type]);
 
   // Auto-calculate lay stake when back stake, back odds, or lay odds change
@@ -254,6 +259,18 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     }
   };
 
+  // Add error boundary for the entire component
+  if (!bookmakers || !exchanges) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="card bg-red-50 border-red-200">
+          <h3 className="text-lg font-semibold text-red-900 mb-2">⚠️ Error Loading Data</h3>
+          <p className="text-sm text-red-800">Unable to load bookmakers and exchanges. Please refresh the page.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Workflow Guide */}
@@ -285,19 +302,19 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
           <div className="text-sm text-red-800 space-y-2">
             {balanceWarnings.bookmaker && (
               <div>
-                <p><strong>{formData.bookmaker}:</strong> Need £{balanceWarnings.bookmaker.required.toFixed(2)}, have £{balanceWarnings.bookmaker.available.toFixed(2)}</p>
+                <p><strong>{formData.bookmaker || 'Bookmaker'}:</strong> Need £{(balanceWarnings.bookmaker.required || 0).toFixed(2)}, have £{(balanceWarnings.bookmaker.available || 0).toFixed(2)}</p>
                 <p className="text-xs">
-                  {isFreeBet ? 
-                    "💡 Check the 'This is a free bet' toggle above to bypass balance requirement" :
-                    `💡 Add £${balanceWarnings.bookmaker.shortfall.toFixed(2)} deposit in Cashflow tab`
+                  {formData.type === 'free' ? 
+                    "💡 Free bets don't require bookmaker balance" :
+                    `💡 Add £${(balanceWarnings.bookmaker.shortfall || 0).toFixed(2)} deposit in Cashflow tab`
                   }
                 </p>
               </div>
             )}
             {balanceWarnings.exchange && (
               <div>
-                <p><strong>{formData.exchange}:</strong> Need £{balanceWarnings.exchange.required.toFixed(2)}, have £{balanceWarnings.exchange.available.toFixed(2)}</p>
-                <p className="text-xs">💡 Add £{balanceWarnings.exchange.shortfall.toFixed(2)} deposit in Cashflow tab</p>
+                <p><strong>{formData.exchange || 'Exchange'}:</strong> Need £{(balanceWarnings.exchange.required || 0).toFixed(2)}, have £{(balanceWarnings.exchange.available || 0).toFixed(2)}</p>
+                <p className="text-xs">💡 Add £{(balanceWarnings.exchange.shortfall || 0).toFixed(2)} deposit in Cashflow tab</p>
               </div>
             )}
           </div>
