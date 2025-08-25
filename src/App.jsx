@@ -176,7 +176,7 @@ function App() {
             </p>
           </div>
         </div>
-      </nav>
+      </div>
 
       {/* Bottom padding to account for fixed navigation */}
       <div className="h-40 pb-safe"></div>
