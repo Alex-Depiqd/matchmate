@@ -60,7 +60,6 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     liability: ''
   });
 
-  const [isFreeBet, setIsFreeBet] = useState(false);
   const [selectedFreeBet, setSelectedFreeBet] = useState(null);
 
   const [errors, setErrors] = useState({});
@@ -84,7 +83,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     const warnings = {};
     
     // Only check bookmaker balance if it's NOT a free bet
-    if (formData.bookmaker && formData.backStake && !isFreeBet) {
+    if (formData.bookmaker && formData.backStake && formData.type !== 'free') {
       const bookmaker = bookmakers.find(bm => bm.name === formData.bookmaker);
       if (bookmaker && parseFloat(formData.backStake) > bookmaker.currentBalance) {
         warnings.bookmaker = {
@@ -107,7 +106,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     }
     
     setBalanceWarnings(warnings);
-  }, [formData.bookmaker, formData.exchange, formData.backStake, formData.liability, bookmakers, exchanges, isFreeBet]);
+  }, [formData.bookmaker, formData.exchange, formData.backStake, formData.liability, bookmakers, exchanges, formData.type]);
 
   // Auto-calculate lay stake when back stake, back odds, or lay odds change
   useEffect(() => {
@@ -181,7 +180,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     // Check for balance warnings (but allow free bets to bypass bookmaker balance check)
     if (Object.keys(balanceWarnings).length > 0) {
       // Only show balance error if it's not a free bet OR if it's an exchange balance issue
-      const hasBookmakerBalanceIssue = balanceWarnings.bookmaker && !isFreeBet;
+      const hasBookmakerBalanceIssue = balanceWarnings.bookmaker && formData.type !== 'free';
       const hasExchangeBalanceIssue = balanceWarnings.exchange;
       
       if (hasBookmakerBalanceIssue || hasExchangeBalanceIssue) {
@@ -205,7 +204,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         bookmaker: formData.bookmaker,
         exchange: formData.exchange,
         event: formData.event,
-        type: isFreeBet ? 'free' : formData.type,
+        type: formData.type,
         backStake: parseFloat(formData.backStake),
         backOdds: parseFloat(formData.backOdds),
         layStake: parseFloat(formData.layStake),
@@ -217,7 +216,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
       dataManager.addBetAndUpdateBalances(newBet);
       
       // If this was a free bet and we have a selected free bet, mark it as used
-      if (isFreeBet && selectedFreeBet) {
+      if (formData.type === 'free' && selectedFreeBet) {
         dataManager.updateFreeBet(selectedFreeBet.id, {
           status: 'used',
           usedAt: new Date().toISOString()
@@ -236,7 +235,6 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         layStake: '',
         liability: ''
       });
-      setIsFreeBet(false);
       setSelectedFreeBet(null);
 
       onBetAdded();
@@ -322,19 +320,27 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Add New Bet</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Event Details */}
-          <div>
-            <label className="label">Event Description</label>
-            <input
-              type="text"
-              name="event"
-              value={formData.event}
+          {/* Bookmaker and Exchange */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CustomDropdown
+              label="Bookmaker"
+              value={formData.bookmaker}
               onChange={handleInputChange}
-              placeholder="e.g., Arsenal v Spurs - Draw"
-              className={`input min-h-[44px] text-base ${errors.event ? 'border-red-500' : ''}`}
-              style={{ fontSize: '16px' }} // Prevents zoom on iOS
+              options={bookmakers.map(bm => ({ value: bm.name, label: bm.name }))}
+              error={errors.bookmaker}
+              placeholder="Select Bookmaker"
+              fieldName="bookmaker"
             />
-            {errors.event && <p className="text-red-600 text-sm mt-1">{errors.event}</p>}
+
+            <CustomDropdown
+              label="Exchange"
+              value={formData.exchange}
+              onChange={handleInputChange}
+              options={exchanges.map(ex => ({ value: ex.name, label: ex.name }))}
+              error={errors.exchange}
+              placeholder="Select Exchange"
+              fieldName="exchange"
+            />
           </div>
 
           {/* Bet Type */}
@@ -350,27 +356,8 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
             fieldName="type"
           />
 
-          {/* Free Bet Toggle */}
-          <div className="flex items-center space-x-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <input
-              type="checkbox"
-              id="freeBetToggle"
-              checked={isFreeBet}
-              onChange={(e) => {
-                setIsFreeBet(e.target.checked);
-                if (!e.target.checked) {
-                  setSelectedFreeBet(null);
-                }
-              }}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-            />
-            <label htmlFor="freeBetToggle" className="text-sm font-medium text-yellow-900">
-              This is a free bet (no balance required)
-            </label>
-          </div>
-
           {/* Free Bet Selector */}
-          {isFreeBet && (
+          {formData.type === 'free' && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <label className="label text-blue-900">Select Free Bet to Use</label>
               <select
@@ -402,27 +389,35 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
             </div>
           )}
 
-          {/* Bookmaker and Exchange */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CustomDropdown
-              label="Bookmaker"
-              value={formData.bookmaker}
+          {/* Event Details */}
+          <div>
+            <label className="label">Event Description</label>
+            <input
+              type="text"
+              name="event"
+              value={formData.event}
               onChange={handleInputChange}
-              options={bookmakers.map(bm => ({ value: bm.name, label: bm.name }))}
-              error={errors.bookmaker}
-              placeholder="Select Bookmaker"
-              fieldName="bookmaker"
+              placeholder="e.g., Arsenal v Spurs - Draw"
+              className={`input min-h-[44px] text-base ${errors.event ? 'border-red-500' : ''}`}
+              style={{ fontSize: '16px' }} // Prevents zoom on iOS
             />
+            {errors.event && <p className="text-red-600 text-sm mt-1">{errors.event}</p>}
+          </div>
 
-            <CustomDropdown
-              label="Exchange"
-              value={formData.exchange}
+          {/* Result Selection (Optional) */}
+          <div>
+            <label className="label">Result (Optional)</label>
+            <select
+              name="result"
+              value={formData.result || ''}
               onChange={handleInputChange}
-              options={exchanges.map(ex => ({ value: ex.name, label: ex.name }))}
-              error={errors.exchange}
-              placeholder="Select Exchange"
-              fieldName="exchange"
-            />
+              className="input"
+            >
+              <option value="">Select result...</option>
+              <option value="home">Home Win</option>
+              <option value="away">Away Win</option>
+              <option value="draw">Draw</option>
+            </select>
           </div>
 
           {/* Back Bet Details */}
@@ -452,9 +447,9 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
                   name="backOdds"
                   value={formData.backOdds}
                   onChange={handleInputChange}
-                  step="0.01"
+                  step="0.001"
                   min="1"
-                  placeholder="2.00"
+                  placeholder="2.000"
                   className={`input min-h-[44px] text-base ${errors.backOdds ? 'border-red-500' : ''}`}
                   style={{ fontSize: '16px' }} // Prevents zoom on iOS
                 />
@@ -467,21 +462,21 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
           <div className="card bg-green-50 border-green-200">
             <h3 className="text-lg font-semibold text-green-900 mb-4">Lay Bet</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="label">Lay Odds</label>
-                <input
-                  type="number"
-                  name="layOdds"
-                  value={formData.layOdds}
-                  onChange={handleInputChange}
-                  step="0.01"
-                  min="1"
-                  placeholder="2.00"
-                  className={`input min-h-[44px] text-base ${errors.layOdds ? 'border-red-500' : ''}`}
-                  style={{ fontSize: '16px' }} // Prevents zoom on iOS
-                />
-                {errors.layOdds && <p className="text-red-600 text-sm mt-1">{errors.layOdds}</p>}
-              </div>
+                                  <div>
+                      <label className="label">Lay Odds</label>
+                      <input
+                        type="number"
+                        name="layOdds"
+                        value={formData.layOdds}
+                        onChange={handleInputChange}
+                        step="0.001"
+                        min="1"
+                        placeholder="2.000"
+                        className={`input min-h-[44px] text-base ${errors.layOdds ? 'border-red-500' : ''}`}
+                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
+                      />
+                      {errors.layOdds && <p className="text-red-600 text-sm mt-1">{errors.layOdds}</p>}
+                    </div>
 
               <div>
                 <label className="label">Liability (£)</label>
@@ -490,9 +485,9 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
                   name="liability"
                   value={formData.liability}
                   onChange={handleInputChange}
-                  step="0.01"
+                  step="0.001"
                   min="0"
-                  placeholder="0.00"
+                  placeholder="0.000"
                   className={`input min-h-[44px] text-base ${errors.liability ? 'border-red-500' : ''}`}
                   style={{ fontSize: '16px' }} // Prevents zoom on iOS
                 />
@@ -521,9 +516,9 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
                   value={formData.layStake}
                   onChange={handleInputChange}
                   readOnly={!manualLayStake}
-                  step="0.01"
+                  step="0.001"
                   min="0"
-                  placeholder="0.00"
+                  placeholder="0.000"
                   className={`input min-h-[44px] text-base ${!manualLayStake ? 'bg-gray-100' : ''} ${errors.layStake ? 'border-red-500' : ''}`}
                   style={{ fontSize: '16px' }} // Prevents zoom on iOS
                 />
