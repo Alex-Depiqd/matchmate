@@ -4,7 +4,8 @@ const STORAGE_KEYS = {
   EXCHANGES: 'matchMate_exchanges',
   BETS: 'matchMate_bets',
   SEED: 'matchMate_seed',
-  SETTINGS: 'matchMate_settings'
+  SETTINGS: 'matchMate_settings',
+  FREE_BETS: 'matchMate_freeBets'
 };
 
 // Helper functions for localStorage
@@ -304,7 +305,33 @@ export const dataManager = {
 
   // Settings
   getSettings: () => storage.get(STORAGE_KEYS.SETTINGS) || {},
-  setSettings: (settings) => storage.set(STORAGE_KEYS.SETTINGS, settings)
+  setSettings: (settings) => storage.set(STORAGE_KEYS.SETTINGS, settings),
+
+  // Free Bets
+  getFreeBets: () => storage.get(STORAGE_KEYS.FREE_BETS) || [],
+  setFreeBets: (freeBets) => storage.set(STORAGE_KEYS.FREE_BETS, freeBets),
+  addFreeBet: (freeBet) => {
+    const freeBets = dataManager.getFreeBets();
+    freeBets.push(freeBet);
+    dataManager.setFreeBets(freeBets);
+    return freeBet;
+  },
+  updateFreeBet: (id, updates) => {
+    const freeBets = dataManager.getFreeBets();
+    const index = freeBets.findIndex(fb => fb.id === id);
+    if (index !== -1) {
+      freeBets[index] = { ...freeBets[index], ...updates };
+      dataManager.setFreeBets(freeBets);
+      return freeBets[index];
+    }
+    return null;
+  },
+  deleteFreeBet: (id) => {
+    const freeBets = dataManager.getFreeBets();
+    const filteredFreeBets = freeBets.filter(fb => fb.id !== id);
+    dataManager.setFreeBets(filteredFreeBets);
+    return filteredFreeBets;
+  }
 };
 
 export default storage;

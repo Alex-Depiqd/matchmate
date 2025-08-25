@@ -11,6 +11,10 @@ const Dashboard = ({
   seedProgress,
   onRefresh
 }) => {
+  const { dataManager } = require('../utils/storage');
+  const freeBets = dataManager.getFreeBets();
+  const pendingFreeBets = freeBets.filter(fb => fb.status === 'pending');
+  const totalFreeBetValue = pendingFreeBets.reduce((sum, fb) => sum + fb.value, 0);
   const unsettledBets = bets.filter(bet => bet.status === 'unsettled');
   const totalExposure = exchanges.reduce((sum, e) => sum + (e.exposure || 0), 0);
   const openStakes = unsettledBets.reduce((sum, bet) => sum + (bet.backStake || 0), 0);
@@ -149,6 +153,28 @@ const Dashboard = ({
           </div>
         </div>
       </div>
+
+      {/* Free Bet Summary */}
+      {pendingFreeBets.length > 0 && (
+        <div className="card bg-yellow-50 border-yellow-200">
+          <h3 className="text-lg font-semibold text-yellow-900 mb-4">🎁 Pending Free Bets</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-yellow-700">Total Pending</span>
+              <span className="font-medium text-yellow-800">{pendingFreeBets.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-yellow-700">Total Value</span>
+              <span className="font-medium text-yellow-800">{formatCurrency(totalFreeBetValue)}</span>
+            </div>
+            <div className="pt-2">
+              <a href="#free-bets" className="text-sm text-yellow-600 hover:text-yellow-800 underline">
+                View all free bets →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recent Activity */}
       <div className="card">

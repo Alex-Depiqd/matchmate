@@ -61,6 +61,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
   });
 
   const [isFreeBet, setIsFreeBet] = useState(false);
+  const [selectedFreeBet, setSelectedFreeBet] = useState(null);
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -215,6 +216,14 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
 
       dataManager.addBetAndUpdateBalances(newBet);
       
+      // If this was a free bet and we have a selected free bet, mark it as used
+      if (isFreeBet && selectedFreeBet) {
+        dataManager.updateFreeBet(selectedFreeBet.id, {
+          status: 'used',
+          usedAt: new Date().toISOString()
+        });
+      }
+      
       // Reset form
       setFormData({
         bookmaker: '',
@@ -228,6 +237,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         liability: ''
       });
       setIsFreeBet(false);
+      setSelectedFreeBet(null);
 
       onBetAdded();
       
@@ -346,13 +356,51 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
               type="checkbox"
               id="freeBetToggle"
               checked={isFreeBet}
-              onChange={(e) => setIsFreeBet(e.target.checked)}
+              onChange={(e) => {
+                setIsFreeBet(e.target.checked);
+                if (!e.target.checked) {
+                  setSelectedFreeBet(null);
+                }
+              }}
               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
             />
             <label htmlFor="freeBetToggle" className="text-sm font-medium text-yellow-900">
               This is a free bet (no balance required)
             </label>
           </div>
+
+          {/* Free Bet Selector */}
+          {isFreeBet && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <label className="label text-blue-900">Select Free Bet to Use</label>
+              <select
+                value={selectedFreeBet ? selectedFreeBet.id : ''}
+                onChange={(e) => {
+                  const freeBets = dataManager.getFreeBets();
+                  const selected = freeBets.find(fb => fb.id === e.target.value);
+                  setSelectedFreeBet(selected);
+                  if (selected) {
+                    setFormData(prev => ({ ...prev, backStake: selected.value.toString() }));
+                  }
+                }}
+                className="input"
+              >
+                <option value="">Choose a free bet...</option>
+                {dataManager.getFreeBets()
+                  .filter(fb => fb.status === 'pending' && fb.bookmaker === formData.bookmaker)
+                  .map(fb => (
+                    <option key={fb.id} value={fb.id}>
+                      {fb.bookmaker} - £{fb.value} {fb.expiryDate ? `(expires ${new Date(fb.expiryDate).toLocaleDateString()})` : ''}
+                    </option>
+                  ))}
+              </select>
+              {selectedFreeBet && (
+                <p className="text-sm text-blue-700 mt-2">
+                  Using free bet: £{selectedFreeBet.value} from {selectedFreeBet.bookmaker}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Bookmaker and Exchange */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

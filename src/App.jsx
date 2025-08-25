@@ -6,6 +6,7 @@ import Bets from './components/Bets';
 import AddBet from './components/AddBet';
 import Cashflow from './components/Cashflow';
 import Settings from './components/Settings';
+import FreeBetTracker from './components/FreeBetTracker';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,6 +47,7 @@ function App() {
     { id: 'cashflow', label: 'Cashflow', icon: '💰' },
     { id: 'add-bet', label: 'Add Bet', icon: '➕' },
     { id: 'bets', label: 'Bets', icon: '🎯' },
+    { id: 'free-bets', label: 'Free Bets', icon: '🎁' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
@@ -72,6 +74,13 @@ function App() {
               bets={bets}
               bookmakers={bookmakers}
               exchanges={exchanges}
+              onRefresh={refreshData}
+            />
+          );
+        case 'free-bets':
+          return (
+            <FreeBetTracker
+              bookmakers={bookmakers}
               onRefresh={refreshData}
             />
           );
