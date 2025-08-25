@@ -55,7 +55,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
       const layOdds = parseFloat(editFormData.layOdds || value);
       
       if (backStake && backOdds && layOdds && !manualLayStake) {
-        const layStake = calculateLayStake(backStake, backOdds, layOdds);
+        const layStake = calculateLayStake(backStake, backOdds, layOdds, editFormData.type === 'free', false);
         const liability = calculateLiability(layStake, layOdds);
         setEditFormData(prev => ({ 
           ...prev, 

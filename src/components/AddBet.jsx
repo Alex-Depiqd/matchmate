@@ -61,6 +61,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
   });
 
   const [selectedFreeBet, setSelectedFreeBet] = useState(null);
+  const [stakeReturned, setStakeReturned] = useState(false);
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,12 +115,14 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
       const layStake = calculateLayStake(
         parseFloat(formData.backStake), 
         parseFloat(formData.backOdds), 
-        parseFloat(formData.layOdds)
+        parseFloat(formData.layOdds),
+        formData.type === 'free',
+        stakeReturned
       );
       const liability = calculateLiability(parseFloat(layStake), parseFloat(formData.layOdds));
       setFormData(prev => ({ ...prev, layStake, liability }));
     }
-  }, [formData.backStake, formData.backOdds, formData.layOdds, manualLayStake]);
+  }, [formData.backStake, formData.backOdds, formData.layOdds, manualLayStake, formData.type, stakeReturned]);
 
   // Update liability when lay stake is manually changed
   useEffect(() => {
@@ -147,7 +150,9 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         const layStake = calculateLayStake(
           parseFloat(formData.backStake), 
           parseFloat(formData.backOdds), 
-          parseFloat(formData.layOdds)
+          parseFloat(formData.layOdds),
+          formData.type === 'free',
+          stakeReturned
         );
         const liability = calculateLiability(parseFloat(layStake), parseFloat(formData.layOdds));
         setFormData(prev => ({ ...prev, layStake, liability }));
@@ -386,6 +391,24 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
                   Using free bet: £{selectedFreeBet.value} from {selectedFreeBet.bookmaker}
                 </p>
               )}
+              
+              {/* Stake Returned Checkbox for Free Bets */}
+              <div className="mt-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={stakeReturned}
+                    onChange={(e) => setStakeReturned(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-blue-800">
+                    Stake is returned (rare - only for certain bookmakers)
+                  </span>
+                </label>
+                <p className="text-xs text-blue-600 mt-1">
+                  Most free bets only return winnings, not the stake. Only check this if your bookmaker specifically returns the stake.
+                </p>
+              </div>
             </div>
           )}
 

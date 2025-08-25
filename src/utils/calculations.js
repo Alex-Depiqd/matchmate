@@ -6,8 +6,16 @@ export const calculateLiability = (stake, odds) => {
 };
 
 // Calculate lay stake using the standard formula: (Back Stake × Back Odds) ÷ Lay Odds
-export const calculateLayStake = (backStake, backOdds, layOdds) => {
-  return ((backStake * backOdds) / layOdds).toFixed(2);
+// For free bets, we need to consider whether the stake is returned or not
+export const calculateLayStake = (backStake, backOdds, layOdds, isFreeBet = false, stakeReturned = false) => {
+  if (isFreeBet && !stakeReturned) {
+    // For free bets without stake returned: (Back Stake × (Back Odds - 1)) ÷ (Lay Odds - 1)
+    // This accounts for only the winnings being returned, not the stake
+    return ((backStake * (backOdds - 1)) / (layOdds - 1)).toFixed(2);
+  } else {
+    // Standard formula for qualifying bets or free bets with stake returned
+    return ((backStake * backOdds) / layOdds).toFixed(2);
+  }
 };
 
 // Calculate profit/loss for a bet
