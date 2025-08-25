@@ -135,6 +135,9 @@ function App() {
                   £{settledProfit}
                 </span>
               </div>
+              <div className="text-xs text-gray-400">
+                © 2025 Alex Cameron
+              </div>
             </div>
           </div>
         </div>
@@ -166,17 +169,6 @@ function App() {
           </div>
         </div>
       </nav>
-
-      {/* Copyright Notice */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200" style={{ bottom: '60px', zIndex: 10 }}>
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-center py-1">
-            <p className="text-xs text-gray-500">
-              © 2025 Alex Cameron. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Bottom padding to account for fixed navigation */}
       <div className="h-32 pb-safe"></div>
