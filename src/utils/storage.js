@@ -175,6 +175,34 @@ export const dataManager = {
     dataManager.setBets(bets);
     return newBet;
   },
+
+  // New function to add bet and update balances
+  addBetAndUpdateBalances: (bet) => {
+    // First add the bet
+    const newBet = dataManager.addBet(bet);
+    
+    // Update bookmaker balance (reduce by back stake)
+    const bookmakers = dataManager.getBookmakers();
+    const bookmaker = bookmakers.find(bm => bm.name === bet.bookmaker);
+    if (bookmaker) {
+      const newBalance = bookmaker.currentBalance - bet.backStake;
+      dataManager.updateBookmaker(bookmaker.id, {
+        currentBalance: Math.max(0, newBalance) // Ensure balance doesn't go negative
+      });
+    }
+    
+    // Update exchange exposure (add liability)
+    const exchanges = dataManager.getExchanges();
+    const exchange = exchanges.find(ex => ex.name === bet.exchange);
+    if (exchange) {
+      const newExposure = exchange.exposure + bet.liability;
+      dataManager.updateExchange(exchange.id, {
+        exposure: newExposure
+      });
+    }
+    
+    return newBet;
+  },
   updateBet: (id, updates) => {
     const bets = dataManager.getBets();
     const index = bets.findIndex(b => b.id === id);
@@ -184,6 +212,82 @@ export const dataManager = {
       return bets[index];
     }
     return null;
+  },
+
+  // New function to settle bet and update balances
+  settleBetAndUpdateBalances: (betId, result) => {
+    const bets = dataManager.getBets();
+    const bet = bets.find(b => b.id === betId);
+    if (!bet) return null;
+    
+    // Calculate profit based on result
+    let netProfit = 0;
+    let bookmakerBalanceChange = 0;
+    let exchangeBalanceChange = 0;
+    
+    if (result === 'back_won') {
+      if (bet.type === 'qualifying') {
+        // Qualifying bet: small loss due to odds difference
+        const backWinnings = (bet.backStake * bet.backOdds) - bet.backStake;
+        const layLoss = bet.liability;
+        netProfit = backWinnings - layLoss;
+        bookmakerBalanceChange = backWinnings;
+        exchangeBalanceChange = -bet.liability;
+      } else {
+        // Free bet: only winnings count as profit (stake is "free")
+        const backWinnings = (bet.backStake * bet.backOdds) - bet.backStake;
+        netProfit = backWinnings - bet.liability;
+        bookmakerBalanceChange = backWinnings;
+        exchangeBalanceChange = -bet.liability;
+      }
+    } else if (result === 'lay_won') {
+      if (bet.type === 'qualifying') {
+        // Qualifying bet: small loss due to odds difference
+        const backLoss = bet.backStake;
+        const layWinnings = bet.layStake;
+        netProfit = layWinnings - backLoss;
+        bookmakerBalanceChange = -bet.backStake;
+        exchangeBalanceChange = bet.layStake;
+      } else {
+        // Free bet: only winnings count as profit (stake is "free")
+        const layWinnings = bet.layStake;
+        netProfit = layWinnings; // No back stake loss since it's free
+        bookmakerBalanceChange = 0; // No loss on free bet
+        exchangeBalanceChange = bet.layStake;
+      }
+    }
+    
+    // Update the bet
+    const updatedBet = dataManager.updateBet(betId, {
+      status: result,
+      result: result,
+      netProfit: netProfit.toFixed(2),
+      settledAt: new Date().toISOString()
+    });
+    
+    // Update bookmaker balance
+    const bookmakers = dataManager.getBookmakers();
+    const bookmaker = bookmakers.find(bm => bm.name === bet.bookmaker);
+    if (bookmaker) {
+      const newBalance = bookmaker.currentBalance + bookmakerBalanceChange;
+      dataManager.updateBookmaker(bookmaker.id, {
+        currentBalance: Math.max(0, newBalance)
+      });
+    }
+    
+    // Update exchange balance and remove exposure
+    const exchanges = dataManager.getExchanges();
+    const exchange = exchanges.find(ex => ex.name === bet.exchange);
+    if (exchange) {
+      const newBalance = exchange.currentBalance + exchangeBalanceChange;
+      const newExposure = exchange.exposure - bet.liability;
+      dataManager.updateExchange(exchange.id, {
+        currentBalance: Math.max(0, newBalance),
+        exposure: Math.max(0, newExposure)
+      });
+    }
+    
+    return updatedBet;
   },
 
   // Seed

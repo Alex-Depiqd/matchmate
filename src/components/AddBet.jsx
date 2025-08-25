@@ -204,7 +204,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         status: 'unsettled'
       };
 
-      dataManager.addBet(newBet);
+      dataManager.addBetAndUpdateBalances(newBet);
       
       // Reset form
       setFormData({

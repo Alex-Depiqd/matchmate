@@ -16,31 +16,9 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
   const settledBets = bets.filter(bet => bet.status !== 'unsettled');
 
   const handleSettleBet = (betId, result) => {
-    const bet = bets.find(b => b.id === betId);
-    if (!bet) return;
-
-    let netProfit = 0;
-    let status = '';
-
-    if (result === 'back_won') {
-      const backWinnings = (bet.backStake * bet.backOdds) - bet.backStake;
-      const layLoss = bet.liability;
-      netProfit = backWinnings - layLoss;
-      status = 'back_won';
-    } else if (result === 'lay_won') {
-      const backLoss = bet.backStake;
-      const layWinnings = bet.layStake;
-      netProfit = layWinnings - backLoss;
-      status = 'lay_won';
-    }
-
-    dataManager.updateBet(betId, {
-      status,
-      result,
-      netProfit: netProfit.toFixed(2),
-      settledAt: new Date().toISOString()
-    });
-
+    // Use the new function that updates balances and exposure
+    dataManager.settleBetAndUpdateBalances(betId, result);
+    
     onRefresh();
     setSelectedBet(null);
   };

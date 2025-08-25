@@ -43,9 +43,9 @@ function App() {
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'bets', label: 'Bets', icon: '🎯' },
-    { id: 'add-bet', label: 'Add Bet', icon: '➕' },
     { id: 'cashflow', label: 'Cashflow', icon: '💰' },
+    { id: 'add-bet', label: 'Add Bet', icon: '➕' },
+    { id: 'bets', label: 'Bets', icon: '🎯' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
@@ -137,7 +137,7 @@ function App() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-around">
             {tabs.map((tab) => (
@@ -159,7 +159,7 @@ function App() {
       </nav>
 
       {/* Bottom padding to account for fixed navigation */}
-      <div className="h-20"></div>
+      <div className="h-20 pb-safe"></div>
     </div>
   );
 }

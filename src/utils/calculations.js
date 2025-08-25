@@ -130,7 +130,9 @@ export const calculateTotalCommission = (bets, bookmakers, exchanges) => {
 
 // Calculate seed repayment progress
 export const calculateSeedProgress = (seed, settledProfit) => {
-  const repaid = Math.min(parseFloat(settledProfit), seed.initialSeed);
+  // Only count positive profit toward seed repayment
+  const positiveProfit = Math.max(0, parseFloat(settledProfit));
+  const repaid = Math.min(positiveProfit, seed.initialSeed);
   const percentage = seed.initialSeed > 0 ? (repaid / seed.initialSeed) * 100 : 0;
   return {
     repaid: repaid.toFixed(2),
