@@ -181,14 +181,16 @@ export const dataManager = {
     // First add the bet
     const newBet = dataManager.addBet(bet);
     
-    // Update bookmaker balance (reduce by back stake)
-    const bookmakers = dataManager.getBookmakers();
-    const bookmaker = bookmakers.find(bm => bm.name === bet.bookmaker);
-    if (bookmaker) {
-      const newBalance = bookmaker.currentBalance - bet.backStake;
-      dataManager.updateBookmaker(bookmaker.id, {
-        currentBalance: Math.max(0, newBalance) // Ensure balance doesn't go negative
-      });
+    // Update bookmaker balance (reduce by back stake) - but NOT for free bets
+    if (bet.type !== 'free') {
+      const bookmakers = dataManager.getBookmakers();
+      const bookmaker = bookmakers.find(bm => bm.name === bet.bookmaker);
+      if (bookmaker) {
+        const newBalance = bookmaker.currentBalance - bet.backStake;
+        dataManager.updateBookmaker(bookmaker.id, {
+          currentBalance: Math.max(0, newBalance) // Ensure balance doesn't go negative
+        });
+      }
     }
     
     // Update exchange exposure (add liability)

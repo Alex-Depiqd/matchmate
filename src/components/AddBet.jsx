@@ -60,6 +60,8 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     liability: ''
   });
 
+  const [isFreeBet, setIsFreeBet] = useState(false);
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualLayStake, setManualLayStake] = useState(false);
@@ -80,7 +82,8 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
   useEffect(() => {
     const warnings = {};
     
-    if (formData.bookmaker && formData.backStake) {
+    // Only check bookmaker balance if it's NOT a free bet
+    if (formData.bookmaker && formData.backStake && !isFreeBet) {
       const bookmaker = bookmakers.find(bm => bm.name === formData.bookmaker);
       if (bookmaker && parseFloat(formData.backStake) > bookmaker.currentBalance) {
         warnings.bookmaker = {
@@ -103,7 +106,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     }
     
     setBalanceWarnings(warnings);
-  }, [formData.bookmaker, formData.exchange, formData.backStake, formData.liability, bookmakers, exchanges]);
+  }, [formData.bookmaker, formData.exchange, formData.backStake, formData.liability, bookmakers, exchanges, isFreeBet]);
 
   // Auto-calculate lay stake when back stake, back odds, or lay odds change
   useEffect(() => {
@@ -174,9 +177,15 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
       newErrors.layStake = 'Valid lay stake is required';
     }
 
-    // Check for balance warnings
+    // Check for balance warnings (but allow free bets to bypass bookmaker balance check)
     if (Object.keys(balanceWarnings).length > 0) {
-      newErrors.balance = 'Insufficient funds detected';
+      // Only show balance error if it's not a free bet OR if it's an exchange balance issue
+      const hasBookmakerBalanceIssue = balanceWarnings.bookmaker && !isFreeBet;
+      const hasExchangeBalanceIssue = balanceWarnings.exchange;
+      
+      if (hasBookmakerBalanceIssue || hasExchangeBalanceIssue) {
+        newErrors.balance = 'Insufficient funds detected';
+      }
     }
 
     setErrors(newErrors);
@@ -195,7 +204,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         bookmaker: formData.bookmaker,
         exchange: formData.exchange,
         event: formData.event,
-        type: formData.type,
+        type: isFreeBet ? 'free' : formData.type,
         backStake: parseFloat(formData.backStake),
         backOdds: parseFloat(formData.backOdds),
         layStake: parseFloat(formData.layStake),
@@ -218,6 +227,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         layStake: '',
         liability: ''
       });
+      setIsFreeBet(false);
 
       onBetAdded();
       
@@ -263,7 +273,12 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
             {balanceWarnings.bookmaker && (
               <div>
                 <p><strong>{formData.bookmaker}:</strong> Need £{balanceWarnings.bookmaker.required.toFixed(2)}, have £{balanceWarnings.bookmaker.available.toFixed(2)}</p>
-                <p className="text-xs">💡 Add £{balanceWarnings.bookmaker.shortfall.toFixed(2)} deposit in Cashflow tab</p>
+                <p className="text-xs">
+                  {isFreeBet ? 
+                    "💡 Check the 'This is a free bet' toggle above to bypass balance requirement" :
+                    `💡 Add £${balanceWarnings.bookmaker.shortfall.toFixed(2)} deposit in Cashflow tab`
+                  }
+                </p>
               </div>
             )}
             {balanceWarnings.exchange && (
@@ -324,6 +339,20 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
             placeholder="Select Bet Type"
             fieldName="type"
           />
+
+          {/* Free Bet Toggle */}
+          <div className="flex items-center space-x-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <input
+              type="checkbox"
+              id="freeBetToggle"
+              checked={isFreeBet}
+              onChange={(e) => setIsFreeBet(e.target.checked)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+            />
+            <label htmlFor="freeBetToggle" className="text-sm font-medium text-yellow-900">
+              This is a free bet (no balance required)
+            </label>
+          </div>
 
           {/* Bookmaker and Exchange */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -132,7 +132,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-8">
         {renderActiveTab()}
       </main>
 
@@ -159,7 +159,7 @@ function App() {
       </nav>
 
       {/* Bottom padding to account for fixed navigation */}
-      <div className="h-20 pb-safe"></div>
+      <div className="h-24 pb-safe"></div>
     </div>
   );
 }
