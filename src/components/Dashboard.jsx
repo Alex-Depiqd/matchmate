@@ -1,4 +1,5 @@
 import { formatCurrency } from '../utils/calculations';
+import { dataManager } from '../utils/storage';
 
 const Dashboard = ({
   bookmakers,
@@ -11,7 +12,6 @@ const Dashboard = ({
   seedProgress,
   onRefresh
 }) => {
-  const { dataManager } = require('../utils/storage');
   const freeBets = dataManager.getFreeBets();
   const pendingFreeBets = freeBets.filter(fb => fb.status === 'pending');
   const totalFreeBetValue = pendingFreeBets.reduce((sum, fb) => sum + fb.value, 0);
