@@ -80,10 +80,10 @@ export const calculateCurrentFloat = (bookmakers, exchanges, unsettledBets) => {
   const bookmakerBalances = bookmakers.reduce((sum, b) => sum + (b.currentBalance || 0), 0);
   const exchangeBalances = exchanges.reduce((sum, e) => sum + (e.currentBalance || 0), 0);
   const totalExposure = exchanges.reduce((sum, e) => sum + (e.exposure || 0), 0);
+  const openStakes = unsettledBets.reduce((sum, bet) => sum + (bet.backStake || 0), 0);
   
-  // Current Float = Available balances + Money locked in exposure
-  // Note: Back stakes are already deducted from bookmaker balances
-  return bookmakerBalances + exchangeBalances + totalExposure;
+  // Current Float = Available balances + Money locked in open stakes + Money locked in exposure
+  return bookmakerBalances + exchangeBalances + openStakes + totalExposure;
 };
 
 // Calculate settled profit

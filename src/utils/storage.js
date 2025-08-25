@@ -194,12 +194,14 @@ export const dataManager = {
       }
     }
     
-    // Update exchange exposure (add liability)
+    // Update exchange balance and exposure (reduce balance by liability, add to exposure)
     const exchanges = dataManager.getExchanges();
     const exchange = exchanges.find(ex => ex.name === bet.exchange);
     if (exchange) {
+      const newBalance = exchange.currentBalance - bet.liability;
       const newExposure = exchange.exposure + bet.liability;
       dataManager.updateExchange(exchange.id, {
+        currentBalance: Math.max(0, newBalance),
         exposure: newExposure
       });
     }
@@ -230,33 +232,32 @@ export const dataManager = {
     
     if (result === 'back_won') {
       if (bet.type === 'qualifying') {
-        // Qualifying bet: small loss due to odds difference
+        // Qualifying bet: back stake returned + winnings, lay liability released
         const backWinnings = (bet.backStake * bet.backOdds) - bet.backStake;
         const layLoss = bet.liability;
         netProfit = backWinnings - layLoss;
-        bookmakerBalanceChange = backWinnings;
-        exchangeBalanceChange = -bet.liability;
+        bookmakerBalanceChange = bet.backStake + backWinnings; // Stake returned + winnings
+        exchangeBalanceChange = bet.liability - layLoss; // Liability released, lay loss applied
       } else {
         // Free bet: only winnings count as profit (stake is "free")
         const backWinnings = (bet.backStake * bet.backOdds) - bet.backStake;
         netProfit = backWinnings - bet.liability;
-        bookmakerBalanceChange = backWinnings;
-        exchangeBalanceChange = -bet.liability;
+        bookmakerBalanceChange = backWinnings; // Only winnings (no stake returned)
+        exchangeBalanceChange = bet.liability - bet.liability; // Liability released, lay loss applied
       }
     } else if (result === 'lay_won') {
       if (bet.type === 'qualifying') {
-        // Qualifying bet: small loss due to odds difference
-        const backLoss = bet.backStake;
+        // Qualifying bet: back stake lost, lay stake + winnings
         const layWinnings = bet.layStake;
-        netProfit = layWinnings - backLoss;
-        bookmakerBalanceChange = -bet.backStake;
-        exchangeBalanceChange = bet.layStake;
+        netProfit = layWinnings - bet.backStake;
+        bookmakerBalanceChange = 0; // Back stake already deducted on placement
+        exchangeBalanceChange = bet.liability + layWinnings; // Liability released + lay winnings
       } else {
-        // Free bet: only winnings count as profit (stake is "free")
+        // Free bet: only lay winnings count as profit (back stake was free)
         const layWinnings = bet.layStake;
         netProfit = layWinnings; // No back stake loss since it's free
         bookmakerBalanceChange = 0; // No loss on free bet
-        exchangeBalanceChange = bet.layStake;
+        exchangeBalanceChange = bet.liability + layWinnings; // Liability released + lay winnings
       }
     }
     
