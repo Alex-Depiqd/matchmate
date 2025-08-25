@@ -204,15 +204,15 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       // Get existing bookmakers and add them to the list
       const existingNames = bookmakers.map(bm => bm.name);
       const ukBookmakers = UK_BOOKMAKERS.map(bm => bm.name);
-      // Combine and remove duplicates, keeping existing ones first
-      const allOptions = [...new Set([...existingNames, ...ukBookmakers])];
+      // Combine and remove duplicates, then sort alphabetically
+      const allOptions = [...new Set([...existingNames, ...ukBookmakers])].sort();
       return allOptions;
     } else {
       // Get existing exchanges and add them to the list
       const existingNames = exchanges.map(ex => ex.name);
       const ukExchanges = UK_EXCHANGES.map(ex => ex.name);
-      // Combine and remove duplicates, keeping existing ones first
-      const allOptions = [...new Set([...existingNames, ...ukExchanges])];
+      // Combine and remove duplicates, then sort alphabetically
+      const allOptions = [...new Set([...existingNames, ...ukExchanges])].sort();
       return allOptions;
     }
   };
