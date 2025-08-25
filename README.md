@@ -10,7 +10,18 @@ A Progressive Web App (PWA) designed to help matched bettors track their deposit
 - **Bet Management**: Log qualifying and free bets with automatic calculations
 - **Settlement System**: Mark bets as settled and automatically calculate profits
 - **Cashflow Tracking**: Manage deposits and withdrawals for bookmakers and exchanges
+- **Free Bet Tracker**: Track pending, used, and expired free bets
 - **Offline Support**: Works without internet connection using local storage
+
+### Advanced Features
+- **Accurate Free Bet Calculations**: Proper lay stake calculations for free bets (with/without stake returned)
+- **Dynamic Commission Support**: Automatic commission adjustments based on exchange rates
+- **Form Persistence**: Bet form data persists when navigating between tabs
+- **Live Search**: Searchable dropdowns for bookmakers and providers
+- **Accordion Bet Display**: Compact bet list with expandable details
+- **Smart Filtering**: Filter bets by status and free bets by usage
+- **Sorting Options**: Sort bets by newest/oldest
+- **Edit & Delete**: Full bet management with confirmation dialogs
 
 ### Key Metrics Tracked
 - Seed deposited (user-entered once)
@@ -81,13 +92,15 @@ match-mate/
 ├── src/
 │   ├── components/
 │   │   ├── Dashboard.jsx      # Main dashboard view
-│   │   ├── AddBet.jsx         # Bet logging form
-│   │   ├── Bets.jsx           # Bets management
+│   │   ├── AddBet.jsx         # Bet logging form with persistence
+│   │   ├── Bets.jsx           # Bets management with accordion view
 │   │   ├── Cashflow.jsx       # Cashflow tracking
+│   │   ├── FreeBetTracker.jsx # Free bet management
 │   │   └── Settings.jsx       # App settings
 │   ├── utils/
 │   │   ├── storage.js         # Data management
-│   │   └── calculations.js    # Betting calculations
+│   │   ├── calculations.js    # Betting calculations
+│   │   └── bookmakerData.js   # Default bookmaker/exchange data
 │   ├── App.jsx                # Main app component
 │   ├── main.jsx               # App entry point
 │   └── index.css              # Global styles
@@ -115,7 +128,10 @@ match-mate/
       id: string,
       name: string,
       totalDeposits: number,
-      currentBalance: number
+      currentBalance: number,
+      commission: number,
+      website: string,
+      notes: string
     }
   ],
   exchanges: [
@@ -124,7 +140,10 @@ match-mate/
       name: string,
       totalDeposits: number,
       currentBalance: number,
-      exposure: number
+      exposure: number,
+      commission: number,
+      website: string,
+      notes: string
     }
   ],
   bets: [
@@ -140,7 +159,22 @@ match-mate/
       layOdds: number,
       liability: number,
       status: 'unsettled' | 'back_won' | 'lay_won',
-      netProfit: number
+      netProfit: number,
+      notes: string,
+      createdAt: string,
+      settledAt: string
+    }
+  ],
+  freeBets: [
+    {
+      id: string,
+      bookmaker: string,
+      value: number,
+      expiryDate: string,
+      status: 'pending' | 'used' | 'expired',
+      notes: string,
+      createdAt: string,
+      usedAt: string
     }
   ],
   seed: {
