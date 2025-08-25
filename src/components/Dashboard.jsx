@@ -79,6 +79,7 @@ const Dashboard = ({
               <p className={`text-2xl font-bold ${parseFloat(settledProfit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(settledProfit)}
               </p>
+              <p className="text-xs text-gray-500 mt-1">From completed bets</p>
             </div>
             <div className="text-3xl">📈</div>
           </div>

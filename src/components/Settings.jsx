@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { dataManager } from '../utils/storage';
-import { formatCurrency } from '../utils/calculations';
+import { formatCurrency, calculateTotalDeposits } from '../utils/calculations';
 
 const Settings = ({ seed, onSeedUpdated }) => {
   const [showSeedForm, setShowSeedForm] = useState(false);
   const [seedAmount, setSeedAmount] = useState(seed.initialSeed.toString());
+  
+  // Get current total deposits for the "Set from Deposits" feature
+  const currentTotalDeposits = calculateTotalDeposits(
+    dataManager.getBookmakers(),
+    dataManager.getExchanges()
+  );
 
   const handleSeedUpdate = (e) => {
     e.preventDefault();
@@ -22,6 +28,17 @@ const Settings = ({ seed, onSeedUpdated }) => {
 
     setShowSeedForm(false);
     onSeedUpdated();
+  };
+
+  const handleSetSeedFromDeposits = () => {
+    if (confirm(`Set your seed amount to your current total deposits of ${formatCurrency(currentTotalDeposits)}? This will be your baseline for tracking profit.`)) {
+      dataManager.updateSeed({
+        initialSeed: currentTotalDeposits,
+        repaidSoFar: seed.repaidSoFar
+      });
+      onSeedUpdated();
+      alert(`Seed set to ${formatCurrency(currentTotalDeposits)}. You can now track profit against this amount.`);
+    }
   };
 
   const handleResetData = () => {
@@ -100,7 +117,7 @@ const Settings = ({ seed, onSeedUpdated }) => {
           <h3 className="text-lg font-semibold text-gray-900">Seed Management</h3>
           <button
             onClick={() => setShowSeedForm(true)}
-            className="btn-secondary text-sm"
+            className="btn-primary text-sm"
           >
             Update Seed
           </button>
@@ -119,6 +136,35 @@ const Settings = ({ seed, onSeedUpdated }) => {
             <span className="text-gray-600">Remaining:</span>
             <span className="font-medium">{formatCurrency(Math.max(0, seed.initialSeed - seed.repaidSoFar))}</span>
           </div>
+          
+          {/* Set Seed from Current Deposits */}
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium text-blue-900">Current Total Deposits:</span>
+              <span className="font-medium text-blue-900">{formatCurrency(currentTotalDeposits)}</span>
+            </div>
+            <p className="text-xs text-blue-700 mb-3">
+              Set your seed to your current total deposits to track profit from this point forward.
+            </p>
+            <button
+              onClick={handleSetSeedFromDeposits}
+              className="btn-primary text-sm w-full"
+            >
+              Set Seed from Current Deposits
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Start for Existing Matched Bettors */}
+      <div className="card bg-green-50 border-green-200">
+        <h3 className="text-lg font-semibold text-green-900 mb-4">🚀 Quick Start for Existing Matched Bettors</h3>
+        
+        <div className="space-y-3 text-sm text-green-800">
+          <p><strong>Step 1:</strong> Add your existing bookmakers and exchanges in the Cashflow tab</p>
+          <p><strong>Step 2:</strong> Record your current deposits and balances</p>
+          <p><strong>Step 3:</strong> Use the "Set Seed from Current Deposits" button above to set your baseline</p>
+          <p><strong>Step 4:</strong> Start tracking your profits from this point forward!</p>
         </div>
       </div>
 

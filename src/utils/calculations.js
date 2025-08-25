@@ -62,6 +62,19 @@ export const calculateTotalDeposits = (bookmakers, exchanges) => {
   return bookmakerDeposits + exchangeDeposits;
 };
 
+// Calculate total withdrawals (money back to bank account)
+export const calculateTotalWithdrawals = (bookmakers, exchanges) => {
+  // This would need to be tracked separately in the data structure
+  // For now, we'll calculate it as: Total Deposits - Current Balances - Open Stakes - Exposure
+  const totalDeposits = calculateTotalDeposits(bookmakers, exchanges);
+  const totalBalances = bookmakers.reduce((sum, b) => sum + (b.currentBalance || 0), 0) + 
+                       exchanges.reduce((sum, e) => sum + (e.currentBalance || 0), 0);
+  const totalExposure = exchanges.reduce((sum, e) => sum + (e.exposure || 0), 0);
+  
+  // This is a rough estimate - ideally withdrawals would be tracked separately
+  return Math.max(0, totalDeposits - totalBalances - totalExposure);
+};
+
 // Calculate current float
 export const calculateCurrentFloat = (bookmakers, exchanges, unsettledBets) => {
   const bookmakerBalances = bookmakers.reduce((sum, b) => sum + (b.currentBalance || 0), 0);
