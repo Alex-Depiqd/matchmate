@@ -168,18 +168,18 @@ function App() {
       </nav>
 
       {/* Copyright Notice */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe" style={{ bottom: '60px' }}>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200" style={{ bottom: '60px', zIndex: 10 }}>
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-center py-2">
+          <div className="flex justify-center py-1">
             <p className="text-xs text-gray-500">
-              © 2024 Alex Cameron. All rights reserved.
+              © 2025 Alex Cameron. All rights reserved.
             </p>
           </div>
         </div>
       </div>
 
       {/* Bottom padding to account for fixed navigation */}
-      <div className="h-40 pb-safe"></div>
+      <div className="h-32 pb-safe"></div>
     </div>
   );
 }
