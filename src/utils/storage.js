@@ -107,10 +107,10 @@ export const dataManager = {
     if (exchanges === null || exchanges.length === 0) {
       // Initialize with default exchanges if none exist or if empty array
       const defaultExchanges = [
-        { id: 'ex_default_1', name: 'Betfair Exchange', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 5.0, notes: '', website: 'https://www.betfair.com', category: 'Exchange', createdAt: new Date().toISOString() },
-        { id: 'ex_default_2', name: 'Smarkets', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 2.0, notes: '', website: 'https://smarkets.com', category: 'Exchange', createdAt: new Date().toISOString() },
-        { id: 'ex_default_3', name: 'Betdaq', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 5.0, notes: '', website: 'https://www.betdaq.com', category: 'Exchange', createdAt: new Date().toISOString() },
-        { id: 'ex_default_4', name: 'Matchbook', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 1.0, notes: '', website: 'https://www.matchbook.com', category: 'Exchange', createdAt: new Date().toISOString() }
+        { id: 'ex_default_1', name: 'Betfair Exchange', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 5.0, notes: '', website: 'https://www.betfair.com/exchange', category: 'Exchange', createdAt: new Date().toISOString() },
+        { id: 'ex_default_2', name: 'Smarkets', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 0.0, notes: '', website: 'https://smarkets.com', category: 'Exchange', createdAt: new Date().toISOString() },
+        { id: 'ex_default_3', name: 'Betdaq', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 0.0, notes: '', website: 'https://www.betdaq.com', category: 'Exchange', createdAt: new Date().toISOString() },
+        { id: 'ex_default_4', name: 'Matchbook', totalDeposits: 0, currentBalance: 0, exposure: 0, commission: 0.0, notes: '', website: 'https://www.matchbook.com', category: 'Exchange', createdAt: new Date().toISOString() }
       ];
       storage.set(STORAGE_KEYS.EXCHANGES, defaultExchanges);
       return defaultExchanges;
@@ -153,7 +153,7 @@ export const dataManager = {
   addBet: (bet) => {
     const bets = dataManager.getBets();
     const newBet = {
-      id: Date.now().toString(),
+      id: bet.id || `bet_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       bookmaker: bet.bookmaker,
       exchange: bet.exchange,
       event: bet.event,
@@ -166,6 +166,8 @@ export const dataManager = {
       status: bet.status || 'unsettled', // 'unsettled', 'back_won', 'lay_won'
       result: bet.result || null,
       netProfit: bet.netProfit || 0,
+      commission: bet.commission || 0,
+      notes: bet.notes || '',
       createdAt: new Date().toISOString(),
       settledAt: null
     };
