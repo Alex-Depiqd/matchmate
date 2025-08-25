@@ -117,17 +117,34 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
   // Auto-calculate lay stake when back stake, back odds, or lay odds change
   useEffect(() => {
     if (formData.backStake && formData.backOdds && formData.layOdds && !manualLayStake) {
+      // Get commission from selected exchange
+      const selectedExchange = exchanges.find(ex => ex.name === formData.exchange);
+      const commission = selectedExchange ? (selectedExchange.commission || 0) / 100 : 0;
+      
+      console.log('Calculating lay stake with:', {
+        backStake: formData.backStake,
+        backOdds: formData.backOdds,
+        layOdds: formData.layOdds,
+        isFreeBet: formData.type === 'free',
+        stakeReturned: stakeReturned,
+        commission: commission
+      });
+      
       const layStake = calculateLayStake(
         parseFloat(formData.backStake), 
         parseFloat(formData.backOdds), 
         parseFloat(formData.layOdds),
         formData.type === 'free',
-        stakeReturned
+        stakeReturned,
+        commission
       );
       const liability = calculateLiability(parseFloat(layStake), parseFloat(formData.layOdds));
+      
+      console.log('Calculated:', { layStake, liability });
+      
       setFormData(prev => ({ ...prev, layStake, liability }));
     }
-  }, [formData.backStake, formData.backOdds, formData.layOdds, manualLayStake, formData.type, stakeReturned]);
+  }, [formData.backStake, formData.backOdds, formData.layOdds, manualLayStake, formData.type, stakeReturned, formData.exchange, exchanges]);
 
   // Update liability when lay stake is manually changed
   useEffect(() => {
@@ -152,12 +169,17 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     if (!e.target.checked) {
       // Re-enable auto-calculation
       if (formData.backStake && formData.backOdds && formData.layOdds) {
+        // Get commission from selected exchange
+        const selectedExchange = exchanges.find(ex => ex.name === formData.exchange);
+        const commission = selectedExchange ? (selectedExchange.commission || 0) / 100 : 0;
+        
         const layStake = calculateLayStake(
           parseFloat(formData.backStake), 
           parseFloat(formData.backOdds), 
           parseFloat(formData.layOdds),
           formData.type === 'free',
-          stakeReturned
+          stakeReturned,
+          commission
         );
         const liability = calculateLiability(parseFloat(layStake), parseFloat(formData.layOdds));
         setFormData(prev => ({ ...prev, layStake, liability }));
@@ -415,7 +437,10 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
                   <input
                     type="checkbox"
                     checked={stakeReturned}
-                    onChange={(e) => setStakeReturned(e.target.checked)}
+                    onChange={(e) => {
+                      setStakeReturned(e.target.checked);
+                      console.log('Stake returned changed to:', e.target.checked);
+                    }}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm text-blue-800">
@@ -501,6 +526,32 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
           {/* Lay Bet Details */}
           <div className="card bg-green-50 border-green-200">
             <h3 className="text-lg font-semibold text-green-900 mb-4">Lay Bet</h3>
+            
+            {/* Calculation Method Indicator */}
+            {formData.backStake && formData.backOdds && formData.layOdds && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                {(() => {
+                  const selectedExchange = exchanges.find(ex => ex.name === formData.exchange);
+                  const commission = selectedExchange ? (selectedExchange.commission || 0) / 100 : 0;
+                  const commissionPercent = (commission * 100).toFixed(1);
+                  
+                  return (
+                    <>
+                      <p className="text-sm text-blue-800">
+                        <strong>Calculation Method:</strong> {
+                          formData.type === 'free' && !stakeReturned 
+                            ? `Free bet (winnings only): (£${formData.backStake} × ${formData.backOdds - 1}) ÷ (${formData.layOdds} - ${commission})`
+                            : `Standard: (£${formData.backStake} × ${formData.backOdds}) ÷ (${formData.layOdds} - ${commission})`
+                        }
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Using {commissionPercent}% exchange commission. Lay stake = {formData.layStake || 'calculating...'}
+                      </p>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                   <div>
                       <label className="label">Lay Odds</label>

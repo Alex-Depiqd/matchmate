@@ -5,16 +5,24 @@ export const calculateLiability = (stake, odds) => {
   return (stake * (odds - 1)).toFixed(2);
 };
 
-// Calculate lay stake using the standard formula: (Back Stake × Back Odds) ÷ Lay Odds
+// Calculate lay stake using the correct formulas with commission consideration
 // For free bets, we need to consider whether the stake is returned or not
-export const calculateLayStake = (backStake, backOdds, layOdds, isFreeBet = false, stakeReturned = false) => {
+export const calculateLayStake = (backStake, backOdds, layOdds, isFreeBet = false, stakeReturned = false, commission = 0) => {
+  console.log('calculateLayStake called with:', { backStake, backOdds, layOdds, isFreeBet, stakeReturned, commission });
+  
+  // Adjust lay odds for commission: Ol' = Ol - r
+  const adjustedLayOdds = layOdds - commission;
+  
   if (isFreeBet && !stakeReturned) {
-    // For free bets without stake returned: (Back Stake × (Back Odds - 1)) ÷ (Lay Odds - 1)
-    // This accounts for only the winnings being returned, not the stake
-    return ((backStake * (backOdds - 1)) / (layOdds - 1)).toFixed(2);
+    // Free bet (SNR – stake NOT returned): Sl = (B * (Ob - 1)) / (Ol - r)
+    const result = ((backStake * (backOdds - 1)) / adjustedLayOdds).toFixed(2);
+    console.log('Free bet calculation (no stake returned):', result);
+    return result;
   } else {
-    // Standard formula for qualifying bets or free bets with stake returned
-    return ((backStake * backOdds) / layOdds).toFixed(2);
+    // Qualifying bet (stake returned): Sl = (B * Ob) / (Ol - r)
+    const result = ((backStake * backOdds) / adjustedLayOdds).toFixed(2);
+    console.log('Standard calculation (stake returned):', result);
+    return result;
   }
 };
 

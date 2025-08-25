@@ -55,7 +55,11 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
       const layOdds = parseFloat(editFormData.layOdds || value);
       
       if (backStake && backOdds && layOdds && !manualLayStake) {
-        const layStake = calculateLayStake(backStake, backOdds, layOdds, editFormData.type === 'free', false);
+        // Get commission from selected exchange
+        const selectedExchange = exchanges.find(ex => ex.name === editFormData.exchange);
+        const commission = selectedExchange ? (selectedExchange.commission || 0) / 100 : 0;
+        
+        const layStake = calculateLayStake(backStake, backOdds, layOdds, editFormData.type === 'free', false, commission);
         const liability = calculateLiability(layStake, layOdds);
         setEditFormData(prev => ({ 
           ...prev, 
