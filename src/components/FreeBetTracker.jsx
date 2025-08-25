@@ -4,6 +4,7 @@ import { formatCurrency } from '../utils/calculations';
 
 const FreeBetTracker = ({ bookmakers, onRefresh }) => {
   const [freeBets, setFreeBets] = useState([]);
+  const [filter, setFilter] = useState('pending'); // 'all', 'pending', 'used'
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     bookmaker: '',
@@ -58,10 +59,15 @@ const FreeBetTracker = ({ bookmakers, onRefresh }) => {
   };
 
   const handleDeleteFreeBet = (freeBetId) => {
-    const updatedFreeBets = freeBets.filter(fb => fb.id !== freeBetId);
-    setFreeBets(updatedFreeBets);
-    dataManager.setFreeBets(updatedFreeBets);
-    onRefresh();
+    const freeBetToDelete = freeBets.find(fb => fb.id === freeBetId);
+    const confirmMessage = `Are you sure you want to delete the ${freeBetToDelete?.bookmaker} free bet worth ${formatCurrency(freeBetToDelete?.value)}?`;
+    
+    if (window.confirm(confirmMessage)) {
+      const updatedFreeBets = freeBets.filter(fb => fb.id !== freeBetId);
+      setFreeBets(updatedFreeBets);
+      dataManager.setFreeBets(updatedFreeBets);
+      onRefresh();
+    }
   };
 
   const getStatusBadge = (status, expiryDate) => {
@@ -91,6 +97,13 @@ const FreeBetTracker = ({ bookmakers, onRefresh }) => {
   const usedFreeBets = freeBets.filter(fb => fb.status === 'used');
   const totalValue = pendingFreeBets.reduce((sum, fb) => sum + fb.value, 0);
 
+  // Filter free bets based on current filter
+  const filteredFreeBets = freeBets.filter(fb => {
+    if (filter === 'pending') return fb.status === 'pending';
+    if (filter === 'used') return fb.status === 'used';
+    return true; // 'all' shows everything
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -119,6 +132,34 @@ const FreeBetTracker = ({ bookmakers, onRefresh }) => {
           <h3 className="text-lg font-semibold text-blue-900 mb-2">Total Tracked</h3>
           <p className="text-2xl font-bold text-blue-800">{freeBets.length}</p>
         </div>
+      </div>
+
+      {/* Filter Buttons */}
+      <div className="flex justify-center space-x-2">
+        <button
+          onClick={() => setFilter('pending')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Pending ({pendingFreeBets.length})
+        </button>
+        <button
+          onClick={() => setFilter('used')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filter === 'used' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          Used ({usedFreeBets.length})
+        </button>
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          All ({freeBets.length})
+        </button>
       </div>
 
       {/* Add Free Bet Form */}
@@ -196,15 +237,17 @@ const FreeBetTracker = ({ bookmakers, onRefresh }) => {
       )}
 
       {/* Free Bets List */}
-      {freeBets.length === 0 ? (
+      {filteredFreeBets.length === 0 ? (
         <div className="card">
           <p className="text-gray-500 text-center py-8">
-            No free bets tracked yet. Add your first free bet to get started!
+            {filter === 'pending' ? 'No pending free bets.' : 
+             filter === 'used' ? 'No used free bets.' : 
+             'No free bets tracked yet. Add your first free bet to get started!'}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {freeBets.map((freeBet) => (
+          {filteredFreeBets.map((freeBet) => (
             <div key={freeBet.id} className="card">
               <div className="flex justify-between items-start">
                 <div className="flex-1">

@@ -218,6 +218,12 @@ export const dataManager = {
     }
     return null;
   },
+  deleteBet: (id) => {
+    const bets = dataManager.getBets();
+    const filteredBets = bets.filter(b => b.id !== id);
+    dataManager.setBets(filteredBets);
+    return true;
+  },
 
   // New function to settle bet and update balances
   settleBetAndUpdateBalances: (betId, result) => {

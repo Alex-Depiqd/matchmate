@@ -47,19 +47,111 @@ const CustomDropdown = ({ label, value, onChange, options, error, placeholder, f
   );
 };
 
-const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
-  const [formData, setFormData] = useState({
-    bookmaker: '',
-    exchange: '',
-    event: '',
-    type: 'qualifying',
-    backStake: '',
-    backOdds: '',
-    layOdds: '',
-    layStake: '',
-    liability: ''
-  });
+// Searchable Dropdown Component
+const SearchableDropdown = ({ label, value, onChange, options, error, placeholder, fieldName }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
+  const handleSelect = (option) => {
+    onChange({ target: { name: fieldName, value: option } });
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
+  const filteredOptions = options.filter(option => 
+    (option.label || option).toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="relative">
+      <label className="label">{label}</label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full px-3 py-3 text-left border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${error ? 'border-red-500' : ''} ${!value ? 'text-gray-500' : 'text-gray-900'}`}
+        style={{ fontSize: '16px', minHeight: '44px' }}
+      >
+        {value || placeholder}
+        <span className="absolute right-3 top-1/2 transform -translate-y-1/2">
+          {isOpen ? '▲' : '▼'}
+        </span>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+          {/* Search Input */}
+          <div className="p-2 border-b border-gray-200">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search..."
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              autoFocus
+            />
+          </div>
+          
+          {/* Options List */}
+          <div className="max-h-48 overflow-y-auto">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <button
+                  key={option.value || option}
+                  type="button"
+                  onClick={() => handleSelect(option.value || option)}
+                  className="w-full px-4 py-3 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none border-b border-gray-100 last:border-b-0"
+                  style={{ fontSize: '16px', minHeight: '44px' }}
+                >
+                  {option.label || option}
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-3 text-gray-500 text-sm">
+                No matches found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
+    </div>
+  );
+};
+
+const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
+  // Load saved form data from localStorage on component mount
+  const loadSavedFormData = () => {
+    try {
+      const saved = localStorage.getItem('matchMate_addBetForm');
+      return saved ? JSON.parse(saved) : {
+        bookmaker: '',
+        exchange: '',
+        event: '',
+        type: 'qualifying',
+        backStake: '',
+        backOdds: '',
+        layOdds: '',
+        layStake: '',
+        liability: ''
+      };
+    } catch (error) {
+      console.error('Error loading saved form data:', error);
+      return {
+        bookmaker: '',
+        exchange: '',
+        event: '',
+        type: 'qualifying',
+        backStake: '',
+        backOdds: '',
+        layOdds: '',
+        layStake: '',
+        liability: ''
+      };
+    }
+  };
+
+  const [formData, setFormData] = useState(loadSavedFormData);
   const [selectedFreeBet, setSelectedFreeBet] = useState(null);
   const [stakeReturned, setStakeReturned] = useState(false);
 
@@ -68,6 +160,15 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
   const [manualLayStake, setManualLayStake] = useState(false);
   const [showWorkflowGuide, setShowWorkflowGuide] = useState(false);
   const [balanceWarnings, setBalanceWarnings] = useState({});
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('matchMate_addBetForm', JSON.stringify(formData));
+    } catch (error) {
+      console.error('Error saving form data:', error);
+    }
+  }, [formData]);
 
   // Check if this is the first time user is adding a bet
   useEffect(() => {
@@ -164,6 +265,33 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
     }
   };
 
+  const resetForm = () => {
+    const emptyForm = {
+      bookmaker: '',
+      exchange: '',
+      event: '',
+      type: 'qualifying',
+      backStake: '',
+      backOdds: '',
+      layOdds: '',
+      layStake: '',
+      liability: ''
+    };
+    setFormData(emptyForm);
+    setSelectedFreeBet(null);
+    setStakeReturned(false);
+    setManualLayStake(false);
+    setErrors({});
+    setBalanceWarnings({});
+    
+    // Clear from localStorage
+    try {
+      localStorage.removeItem('matchMate_addBetForm');
+    } catch (error) {
+      console.error('Error clearing saved form data:', error);
+    }
+  };
+
   const handleManualLayStakeToggle = (e) => {
     setManualLayStake(e.target.checked);
     if (!e.target.checked) {
@@ -255,19 +383,8 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         });
       }
       
-      // Reset form
-      setFormData({
-        bookmaker: '',
-        exchange: '',
-        event: '',
-        type: 'qualifying',
-        backStake: '',
-        backOdds: '',
-        layOdds: '',
-        layStake: '',
-        liability: ''
-      });
-      setSelectedFreeBet(null);
+      // Reset form and clear localStorage
+      resetForm();
 
       onBetAdded();
       
@@ -361,12 +478,21 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
       )}
 
       <div className="card">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Add New Bet</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Add New Bet</h2>
+          <button
+            type="button"
+            onClick={resetForm}
+            className="btn-secondary text-sm"
+          >
+            Reset Form
+          </button>
+        </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Bookmaker and Exchange */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CustomDropdown
+            <SearchableDropdown
               label="Bookmaker"
               value={formData.bookmaker}
               onChange={handleInputChange}

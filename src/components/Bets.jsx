@@ -4,16 +4,24 @@ import { calculateBetProfit, formatCurrency, calculateLiability, calculateLaySta
 
 const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
   const [filter, setFilter] = useState('all'); // 'all', 'unsettled', 'settled'
+  const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
   const [selectedBet, setSelectedBet] = useState(null);
   const [editingBet, setEditingBet] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [manualLayStake, setManualLayStake] = useState(false);
+  const [expandedBets, setExpandedBets] = useState(new Set()); // Track which bets are expanded
 
-  const filteredBets = bets.filter(bet => {
-    if (filter === 'unsettled') return bet.status === 'unsettled';
-    if (filter === 'settled') return bet.status !== 'unsettled';
-    return true;
-  });
+  const filteredBets = bets
+    .filter(bet => {
+      if (filter === 'unsettled') return bet.status === 'unsettled';
+      if (filter === 'settled') return bet.status !== 'unsettled';
+      return true;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.id);
+      const dateB = new Date(b.createdAt || b.id);
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
 
   const unsettledBets = bets.filter(bet => bet.status === 'unsettled');
   const settledBets = bets.filter(bet => bet.status !== 'unsettled');
@@ -112,6 +120,31 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
     setEditFormData({});
   };
 
+  const handleDeleteBet = () => {
+    if (!editingBet) return;
+    
+    const confirmMessage = `Are you sure you want to delete the bet "${editingBet.event}"? This action cannot be undone.`;
+    
+    if (window.confirm(confirmMessage)) {
+      dataManager.deleteBet(editingBet.id);
+      setEditingBet(null);
+      setEditFormData({});
+      onRefresh();
+    }
+  };
+
+  const toggleBetExpansion = (betId) => {
+    setExpandedBets(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(betId)) {
+        newSet.delete(betId);
+      } else {
+        newSet.add(betId);
+      }
+      return newSet;
+    });
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       unsettled: { color: 'bg-gray-100 text-gray-800', text: 'Unsettled' },
@@ -139,31 +172,55 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Bets</h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            All ({bets.length})
-          </button>
-          <button
-            onClick={() => setFilter('unsettled')}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'unsettled' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Unsettled ({unsettledBets.length})
-          </button>
-          <button
-            onClick={() => setFilter('settled')}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'settled' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Settled ({settledBets.length})
-          </button>
+        <div className="flex items-center space-x-4">
+          {/* Filter Buttons */}
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              All ({bets.length})
+            </button>
+            <button
+              onClick={() => setFilter('unsettled')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'unsettled' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Unsettled ({unsettledBets.length})
+            </button>
+            <button
+              onClick={() => setFilter('settled')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'settled' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Settled ({settledBets.length})
+            </button>
+          </div>
+          
+          {/* Sort Buttons */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Sort:</span>
+            <button
+              onClick={() => setSortOrder('newest')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                sortOrder === 'newest' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Newest
+            </button>
+            <button
+              onClick={() => setSortOrder('oldest')}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                sortOrder === 'oldest' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Oldest
+            </button>
+          </div>
         </div>
       </div>
 
@@ -197,95 +254,122 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredBets.map((bet) => (
-            <div key={bet.id} className="card">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="font-semibold text-gray-900">{bet.event}</h3>
-                    {getStatusBadge(bet.status)}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Bookmaker:</span>
-                      <span className="font-medium ml-2">{bet.bookmaker}</span>
+          {filteredBets.map((bet) => {
+            const isExpanded = expandedBets.has(bet.id);
+            return (
+              <div key={bet.id} className="card">
+                {/* Header - Always Visible */}
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="font-semibold text-gray-900">{bet.event}</h3>
+                      {getStatusBadge(bet.status)}
                     </div>
-                    <div>
-                      <span className="text-gray-500">Exchange:</span>
-                      <span className="font-medium ml-2">{bet.exchange}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Type:</span>
-                      <span className="font-medium ml-2 capitalize">{bet.type}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Back Stake:</span>
-                      <span className="font-medium ml-2">{formatCurrency(bet.backStake)}</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mt-2">
-                    <div>
-                      <span className="text-gray-500">Back Odds:</span>
-                      <span className="font-medium ml-2">{bet.backOdds}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Lay Odds:</span>
-                      <span className="font-medium ml-2">{bet.layOdds}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Liability:</span>
-                      <span className="font-medium ml-2">{formatCurrency(bet.liability)}</span>
-                    </div>
-                    {bet.status !== 'unsettled' && (
+                    
+                    {/* Summary Info - Always Visible */}
+                    <div className="flex items-center space-x-4 text-sm">
                       <div>
                         <span className="text-gray-500">Profit:</span>
-                        <span className={`font-medium ml-2 ${getProfitColor(bet.netProfit)}`}>
-                          {formatCurrency(bet.netProfit)}
+                        <span className={`font-medium ml-2 ${getProfitColor(bet.netProfit || 0)}`}>
+                          {bet.status !== 'unsettled' ? formatCurrency(bet.netProfit) : 'Pending'}
                         </span>
                       </div>
-                    )}
+                      <div>
+                        <span className="text-gray-500">Stake:</span>
+                        <span className="font-medium ml-2">{formatCurrency(bet.backStake)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Type:</span>
+                        <span className="font-medium ml-2 capitalize">{bet.type}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-gray-400 mt-2">
+                      Created: {new Date(bet.createdAt).toLocaleDateString()}
+                      {bet.settledAt && (
+                        <span className="ml-4">
+                          Settled: {new Date(bet.settledAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-400 mt-2">
-                    Created: {new Date(bet.createdAt).toLocaleDateString()}
-                    {bet.settledAt && (
-                      <span className="ml-4">
-                        Settled: {new Date(bet.settledAt).toLocaleDateString()}
-                      </span>
+                  {/* Action Buttons */}
+                  <div className="flex flex-col space-y-2 ml-4">
+                    <button
+                      onClick={() => toggleBetExpansion(bet.id)}
+                      className="text-gray-500 hover:text-gray-700 text-sm px-2 py-1"
+                    >
+                      {isExpanded ? '▼' : '▶'}
+                    </button>
+                    <button
+                      onClick={() => handleEditBet(bet)}
+                      className="btn-secondary text-sm px-3 py-1"
+                    >
+                      Edit
+                    </button>
+                    {bet.status === 'unsettled' && (
+                      <>
+                        <button
+                          onClick={() => handleSettleBet(bet.id, 'back_won')}
+                          className="btn-success text-sm px-3 py-1"
+                        >
+                          Back Won
+                        </button>
+                        <button
+                          onClick={() => handleSettleBet(bet.id, 'lay_won')}
+                          className="btn-danger text-sm px-3 py-1"
+                        >
+                          Lay Won
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col space-y-2 ml-4">
-                  <button
-                    onClick={() => handleEditBet(bet)}
-                    className="btn-secondary text-sm px-3 py-1"
-                  >
-                    Edit
-                  </button>
-                  {bet.status === 'unsettled' && (
-                    <>
-                      <button
-                        onClick={() => handleSettleBet(bet.id, 'back_won')}
-                        className="btn-success text-sm px-3 py-1"
-                      >
-                        Back Won
-                      </button>
-                      <button
-                        onClick={() => handleSettleBet(bet.id, 'lay_won')}
-                        className="btn-danger text-sm px-3 py-1"
-                      >
-                        Lay Won
-                      </button>
-                    </>
-                  )}
-                </div>
+                {/* Expandable Details */}
+                {isExpanded && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Bookmaker:</span>
+                        <span className="font-medium ml-2">{bet.bookmaker}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Exchange:</span>
+                        <span className="font-medium ml-2">{bet.exchange}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Back Odds:</span>
+                        <span className="font-medium ml-2">{bet.backOdds}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Lay Odds:</span>
+                        <span className="font-medium ml-2">{bet.layOdds}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mt-2">
+                      <div>
+                        <span className="text-gray-500">Lay Stake:</span>
+                        <span className="font-medium ml-2">{formatCurrency(bet.layStake)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Liability:</span>
+                        <span className="font-medium ml-2">{formatCurrency(bet.liability)}</span>
+                      </div>
+                      {bet.notes && (
+                        <div className="md:col-span-2">
+                          <span className="text-gray-500">Notes:</span>
+                          <span className="font-medium ml-2">{bet.notes}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -392,7 +476,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                         type="number"
                         value={editFormData.backOdds || ''}
                         onChange={(e) => handleEditFormChange('backOdds', e.target.value)}
-                        step="0.01"
+                        step="0.001"
                         min="1"
                         className="input"
                         required
@@ -411,7 +495,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                         type="number"
                         value={editFormData.layOdds || ''}
                         onChange={(e) => handleEditFormChange('layOdds', e.target.value)}
-                        step="0.01"
+                        step="0.001"
                         min="1"
                         className="input"
                         required
@@ -423,7 +507,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                         type="number"
                         value={editFormData.layStake || ''}
                         onChange={(e) => handleEditFormChange('layStake', e.target.value)}
-                        step="0.01"
+                        step="0.001"
                         min="0"
                         className="input"
                         required
@@ -435,7 +519,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                         type="number"
                         value={editFormData.liability || ''}
                         onChange={(e) => handleEditFormChange('liability', e.target.value)}
-                        step="0.01"
+                        step="0.001"
                         min="0"
                         className="input"
                         required
@@ -457,20 +541,29 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex justify-between items-center pt-4">
                   <button
                     type="button"
-                    onClick={handleCancelEdit}
-                    className="btn-secondary"
+                    onClick={handleDeleteBet}
+                    className="btn-danger"
                   >
-                    Cancel
+                    Delete Bet
                   </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                  >
-                    Save Changes
-                  </button>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

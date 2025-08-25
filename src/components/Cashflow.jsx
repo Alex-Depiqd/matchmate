@@ -43,6 +43,73 @@ const CustomDropdown = ({ value, onChange, options, placeholder, className = "" 
   );
 };
 
+// Searchable Dropdown Component
+const SearchableDropdown = ({ value, onChange, options, placeholder, className = "" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleSelect = (option) => {
+    onChange(option);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
+  const filteredOptions = options.filter(option => 
+    option.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] bg-white text-gray-900 flex justify-between items-center"
+      >
+        <span className={value ? 'text-gray-900' : 'text-gray-500'}>
+          {value || placeholder}
+        </span>
+        <span className="text-gray-400">{isOpen ? '▲' : '▼'}</span>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+          {/* Search Input */}
+          <div className="p-2 border-b border-gray-200">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search..."
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              autoFocus
+            />
+          </div>
+          
+          {/* Options List */}
+          <div className="max-h-48 overflow-y-auto">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleSelect(option)}
+                  className="w-full px-4 py-3 text-left text-gray-900 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none border-b border-gray-100 last:border-b-0"
+                >
+                  {option}
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-3 text-gray-500 text-sm">
+                No matches found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
   const [activeTab, setActiveTab] = useState('bookmakers');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -413,7 +480,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                   className="input"
                 />
               ) : (
-                <CustomDropdown
+                <SearchableDropdown
                   value={formData.name}
                   onChange={handleProviderSelect}
                   options={getProviderOptions()}
@@ -617,15 +684,14 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                       </a>
                     )}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    <span>Balance: {formatCurrency(item.currentBalance || 0)}</span>
-                    <span className="mx-2">•</span>
-                    <span>Deposits: {formatCurrency(item.totalDeposits || 0)}</span>
+                  <div className="text-sm text-gray-600 mt-1 space-y-1">
+                    <div>Balance: {formatCurrency(item.currentBalance || 0)}</div>
+                    <div>Deposits: {formatCurrency(item.totalDeposits || 0)}</div>
+                    {activeTab === 'exchanges' && (
+                      <div>Exposure: {formatCurrency(item.exposure || 0)}</div>
+                    )}
                     {item.commission > 0 && (
-                      <>
-                        <span className="mx-2">•</span>
-                        <span>Commission: {item.commission}%</span>
-                      </>
+                      <div>Commission: {item.commission}%</div>
                     )}
                   </div>
                   {item.notes && (
