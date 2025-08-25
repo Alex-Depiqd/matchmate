@@ -527,31 +527,7 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
           <div className="card bg-green-50 border-green-200">
             <h3 className="text-lg font-semibold text-green-900 mb-4">Lay Bet</h3>
             
-            {/* Calculation Method Indicator */}
-            {formData.backStake && formData.backOdds && formData.layOdds && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                {(() => {
-                  const selectedExchange = exchanges.find(ex => ex.name === formData.exchange);
-                  const commission = selectedExchange ? (selectedExchange.commission || 0) / 100 : 0;
-                  const commissionPercent = (commission * 100).toFixed(1);
-                  
-                  return (
-                    <>
-                      <p className="text-sm text-blue-800">
-                        <strong>Calculation Method:</strong> {
-                          formData.type === 'free' && !stakeReturned 
-                            ? `Free bet (winnings only): (£${formData.backStake} × ${formData.backOdds - 1}) ÷ (${formData.layOdds} - ${commission})`
-                            : `Standard: (£${formData.backStake} × ${formData.backOdds}) ÷ (${formData.layOdds} - ${commission})`
-                        }
-                      </p>
-                      <p className="text-xs text-blue-600 mt-1">
-                        Using {commissionPercent}% exchange commission. Lay stake = {formData.layStake || 'calculating...'}
-                      </p>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                   <div>
                       <label className="label">Lay Odds</label>
