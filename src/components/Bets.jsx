@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { dataManager } from '../utils/storage';
-import { calculateBetProfit, formatCurrency, calculateLiability, calculateLayStake } from '../utils/calculations';
+import { calculateBetProfit, formatCurrency, calculateLiability, calculateLayStake, calculateSettledProfit } from '../utils/calculations';
 
 const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
   const [filter, setFilter] = useState('all'); // 'all', 'unsettled', 'settled'
@@ -10,6 +10,9 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
   const [editFormData, setEditFormData] = useState({});
   const [manualLayStake, setManualLayStake] = useState(false);
   const [expandedBets, setExpandedBets] = useState(new Set()); // Track which bets are expanded
+
+  // Calculate settled profit
+  const settledProfit = calculateSettledProfit(bets);
 
   const filteredBets = bets
     .filter(bet => {
