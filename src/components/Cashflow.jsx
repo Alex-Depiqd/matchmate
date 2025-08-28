@@ -372,7 +372,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
         {/* Add Transaction Form */}
         {showAddForm && (
-          <div className="card">
+          <div className="card transaction-form border-2 border-blue-200 bg-blue-50 shadow-lg">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               {editingItem ? `Edit ${editingItem.name}` : 
                (formData.name && (safeBookmakers.some(bm => bm.name === formData.name) || safeExchanges.some(ex => ex.name === formData.name)) 
