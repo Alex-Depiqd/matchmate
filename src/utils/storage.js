@@ -54,6 +54,41 @@ const storage = {
 
 // Data management functions
 export const dataManager = {
+  // Data repair function
+  repairData: () => {
+    try {
+      console.log('Repairing data...');
+      
+      // Repair bookmakers
+      const bookmakers = storage.get(STORAGE_KEYS.BOOKMAKERS);
+      if (Array.isArray(bookmakers)) {
+        const repairedBookmakers = bookmakers.filter(bm => 
+          bm && typeof bm === 'object' && bm.name && typeof bm.name === 'string' && bm.name.trim() !== ''
+        );
+        if (repairedBookmakers.length !== bookmakers.length) {
+          console.log('Repaired bookmakers data:', { original: bookmakers.length, repaired: repairedBookmakers.length });
+          storage.set(STORAGE_KEYS.BOOKMAKERS, repairedBookmakers);
+        }
+      }
+      
+      // Repair exchanges
+      const exchanges = storage.get(STORAGE_KEYS.EXCHANGES);
+      if (Array.isArray(exchanges)) {
+        const repairedExchanges = exchanges.filter(ex => 
+          ex && typeof ex === 'object' && ex.name && typeof ex.name === 'string' && ex.name.trim() !== ''
+        );
+        if (repairedExchanges.length !== exchanges.length) {
+          console.log('Repaired exchanges data:', { original: exchanges.length, repaired: repairedExchanges.length });
+          storage.set(STORAGE_KEYS.EXCHANGES, repairedExchanges);
+        }
+      }
+      
+      console.log('Data repair completed');
+    } catch (error) {
+      console.error('Error repairing data:', error);
+    }
+  },
+
   // Bookmakers
   getBookmakers: () => {
     const bookmakers = storage.get(STORAGE_KEYS.BOOKMAKERS);

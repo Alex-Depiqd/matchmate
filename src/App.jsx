@@ -24,6 +24,9 @@ function App() {
 
   const loadData = () => {
     try {
+      // Repair any corrupted data first
+      dataManager.repairData();
+      
       const rawBookmakers = dataManager.getBookmakers();
       const rawExchanges = dataManager.getExchanges();
       const rawBets = dataManager.getBets();
