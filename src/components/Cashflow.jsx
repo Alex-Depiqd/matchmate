@@ -131,6 +131,10 @@ const SearchableDropdown = ({ value, onChange, options, placeholder, className =
 };
 
 const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
+  // Safety check to ensure data is valid
+  const safeBookmakers = Array.isArray(bookmakers) ? bookmakers.filter(bm => bm && bm.name) : [];
+  const safeExchanges = Array.isArray(exchanges) ? exchanges.filter(ex => ex && ex.name) : [];
+
   const [activeTab, setActiveTab] = useState('bookmakers');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -151,18 +155,18 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
     notes: ''
   });
 
-  const totalDeposits = bookmakers.reduce((sum, bm) => sum + (bm.totalDeposits || 0), 0) +
-                       exchanges.reduce((sum, ex) => sum + (ex.totalDeposits || 0), 0);
+  const totalDeposits = safeBookmakers.reduce((sum, bm) => sum + (bm.totalDeposits || 0), 0) +
+                       safeExchanges.reduce((sum, ex) => sum + (ex.totalDeposits || 0), 0);
   
-  const totalBalance = bookmakers.reduce((sum, bm) => sum + (bm.currentBalance || 0), 0) +
-                      exchanges.reduce((sum, ex) => sum + (ex.currentBalance || 0), 0);
+  const totalBalance = safeBookmakers.reduce((sum, bm) => sum + (bm.currentBalance || 0), 0) +
+                      safeExchanges.reduce((sum, ex) => sum + (ex.currentBalance || 0), 0);
 
   const showCustomInput = !formData.name || 
-    (!bookmakers.some(bm => bm.name === formData.name) && 
-     !exchanges.some(ex => ex.name === formData.name));
+    (!safeBookmakers.some(bm => bm.name === formData.name) && 
+     !safeExchanges.some(ex => ex.name === formData.name));
 
   const sortedItems = () => {
-    const items = activeTab === 'bookmakers' ? bookmakers : exchanges;
+    const items = activeTab === 'bookmakers' ? safeBookmakers : safeExchanges;
     const filteredItems = items.filter(item => {
       const searchTerm = activeTab === 'bookmakers' ? bookmakerSearchTerm : exchangeSearchTerm;
       return searchTerm === '' || item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -200,8 +204,8 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
     // Check if this is a new provider or existing provider
     const existingProvider = formData.type === 'bookmaker' 
-      ? bookmakers.find(bm => bm.name === formData.name)
-      : exchanges.find(ex => ex.name === formData.name);
+      ? safeBookmakers.find(bm => bm.name === formData.name)
+      : safeExchanges.find(ex => ex.name === formData.name);
 
     if (!existingProvider && !editingItem) {
       // Add new provider first
@@ -387,7 +391,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             {editingItem ? `Edit ${editingItem.name}` : 
-             (formData.name && (bookmakers.some(bm => bm.name === formData.name) || exchanges.some(ex => ex.name === formData.name)) 
+             (formData.name && (safeBookmakers.some(bm => bm.name === formData.name) || safeExchanges.some(ex => ex.name === formData.name)) 
               ? `Add Transaction to ${formData.name}` 
               : 'Add New Provider & Transaction')}
           </h3>
@@ -541,7 +545,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                 className="btn-primary"
               >
                 {editingItem ? 'Update Provider' : 
-                 (formData.name && (bookmakers.some(bm => bm.name === formData.name) || exchanges.some(ex => ex.name === formData.name))
+                 (formData.name && (safeBookmakers.some(bm => bm.name === formData.name) || safeExchanges.some(ex => ex.name === formData.name))
                   ? 'Add Transaction'
                   : 'Add Provider & Transaction')}
               </button>
@@ -554,7 +558,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            Bookmakers ({bookmakers.length})
+            Bookmakers ({safeBookmakers.length})
           </h3>
           <button
             onClick={() => setIsBookmakersCollapsed(!isBookmakersCollapsed)}
@@ -607,13 +611,13 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
             </div>
 
             {/* Bookmakers List */}
-            {bookmakers.filter(bm => bm.name.toLowerCase().includes(bookmakerSearchTerm.toLowerCase())).length === 0 ? (
+            {safeBookmakers.filter(bm => bm.name.toLowerCase().includes(bookmakerSearchTerm.toLowerCase())).length === 0 ? (
               <p className="text-gray-500 text-center py-8">
                 {bookmakerSearchTerm ? 'No bookmakers found matching your search.' : 'No bookmakers added yet. Add your first bookmaker to get started!'}
               </p>
             ) : (
               <div className="space-y-3">
-                {bookmakers
+                {safeBookmakers
                   .filter(bm => bm.name.toLowerCase().includes(bookmakerSearchTerm.toLowerCase()))
                   .sort((a, b) => {
                     let aValue, bValue;
@@ -693,7 +697,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            Exchanges ({exchanges.length})
+            Exchanges ({safeExchanges.length})
           </h3>
           <button
             onClick={() => setIsExchangesCollapsed(!isExchangesCollapsed)}
@@ -746,13 +750,13 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
             </div>
 
             {/* Exchanges List */}
-            {exchanges.filter(ex => ex.name.toLowerCase().includes(exchangeSearchTerm.toLowerCase())).length === 0 ? (
+            {safeExchanges.filter(ex => ex.name.toLowerCase().includes(exchangeSearchTerm.toLowerCase())).length === 0 ? (
               <p className="text-gray-500 text-center py-8">
                 {exchangeSearchTerm ? 'No exchanges found matching your search.' : 'No exchanges added yet. Add your first exchange to get started!'}
               </p>
             ) : (
               <div className="space-y-3">
-                {exchanges
+                {safeExchanges
                   .filter(ex => ex.name.toLowerCase().includes(exchangeSearchTerm.toLowerCase()))
                   .sort((a, b) => {
                     let aValue, bValue;
