@@ -270,76 +270,81 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
             const isExpanded = expandedBets.has(bet.id);
             return (
               <div key={bet.id} className="card">
-                {/* Header - Always Visible */}
-                <div className="flex justify-between items-start gap-3">
+                {/* Main Bet Info */}
+                <div className="flex items-start justify-between">
+                  {/* Left side - Event and basic info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex items-center gap-3 mb-3">
                       <h3 className="font-semibold text-gray-900 truncate">{bet.event}</h3>
                       {getStatusBadge(bet.status)}
                     </div>
                     
-                    {/* Summary Info - Always Visible */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+                    {/* Key metrics in a clean grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-3">
                       <div>
-                        <span className="text-gray-500">Profit:</span>
-                        <span className={`font-medium ml-1 ${getProfitColor(bet.netProfit || 0)}`}>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide">Profit</div>
+                        <div className={`font-semibold ${getProfitColor(bet.netProfit || 0)}`}>
                           {bet.status !== 'unsettled' ? formatCurrency(bet.netProfit) : 'Pending'}
-                        </span>
+                        </div>
                       </div>
                       <div>
-                        <span className="text-gray-500">Stake:</span>
-                        <span className="font-medium ml-1">{formatCurrency(bet.backStake)}</span>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide">Stake</div>
+                        <div className="font-semibold text-gray-900">{formatCurrency(bet.backStake)}</div>
                       </div>
-                      <div className="col-span-2 sm:col-span-1">
-                        <span className="text-gray-500">Type:</span>
-                        <span className="font-medium ml-1 capitalize">{bet.type}</span>
+                      <div>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide">Type</div>
+                        <div className="font-semibold text-gray-900 capitalize">{bet.type}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide">Date</div>
+                        <div className="font-semibold text-gray-900">{new Date(bet.createdAt).toLocaleDateString()}</div>
                       </div>
                     </div>
 
-                    <div className="text-xs text-gray-400 mt-2">
-                      Created: {new Date(bet.createdAt).toLocaleDateString()}
-                      {bet.settledAt && (
-                        <span className="ml-4">
-                          Settled: {new Date(bet.settledAt).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
+                    {/* Settlement date if available */}
+                    {bet.settledAt && (
+                      <div className="text-xs text-gray-400">
+                        Settled: {new Date(bet.settledAt).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col items-end space-y-2 flex-shrink-0">
+                  {/* Right side - Action buttons */}
+                  <div className="flex flex-col items-end gap-2 ml-4 flex-shrink-0">
                     <button
                       onClick={() => toggleBetExpansion(bet.id)}
-                      className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors"
+                      className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors"
                       title={isExpanded ? "Collapse details" : "Expand details"}
                     >
                       {isExpanded ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                         </svg>
                       ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       )}
                     </button>
+                    
                     <button
                       onClick={() => handleEditBet(bet)}
-                      className="btn-secondary text-sm px-3 py-1"
+                      className="btn-secondary text-sm px-4 py-2"
                     >
                       Edit
                     </button>
+                    
                     {bet.status === 'unsettled' && (
-                      <div className="flex space-x-1">
+                      <div className="flex gap-1">
                         <button
                           onClick={() => handleSettleBet(bet.id, 'back_won')}
-                          className="btn-success text-xs px-2 py-1"
+                          className="btn-success text-xs px-3 py-2"
                         >
                           Back Won
                         </button>
                         <button
                           onClick={() => handleSettleBet(bet.id, 'lay_won')}
-                          className="btn-danger text-xs px-2 py-1"
+                          className="btn-danger text-xs px-3 py-2"
                         >
                           Lay Won
                         </button>
@@ -350,23 +355,23 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
 
                 {/* Expandable Details */}
                 {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                       <div>
-                        <span className="text-gray-500">Bookmaker:</span>
-                        <span className="font-medium ml-2">{bet.bookmaker}</span>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Bookmaker</div>
+                        <div className="font-medium text-gray-900">{bet.bookmaker}</div>
                       </div>
                       <div>
-                        <span className="text-gray-500">Exchange:</span>
-                        <span className="font-medium ml-2">{bet.exchange}</span>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Exchange</div>
+                        <div className="font-medium text-gray-900">{bet.exchange}</div>
                       </div>
                       <div>
-                        <span className="text-gray-500">Back Odds:</span>
-                        <span className="font-medium ml-2">{bet.backOdds}</span>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Back Odds</div>
+                        <div className="font-medium text-gray-900">{bet.backOdds}</div>
                       </div>
                       <div>
-                        <span className="text-gray-500">Lay Odds:</span>
-                        <span className="font-medium ml-2">{bet.layOdds}</span>
+                        <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Lay Odds</div>
+                        <div className="font-medium text-gray-900">{bet.layOdds}</div>
                       </div>
                     </div>
 
