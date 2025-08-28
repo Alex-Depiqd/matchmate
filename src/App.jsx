@@ -126,16 +126,15 @@ function App() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Match Mate</h1>
+            <div className="flex items-center min-w-0 flex-1">
+              <h1 className="text-xl font-bold text-gray-900 truncate">Match Mate</h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 flex-shrink-0">
               <div className="text-sm text-gray-500">
                 Profit: <span className={`font-medium ${parseFloat(settledProfit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   £{settledProfit}
                 </span>
               </div>
-
             </div>
           </div>
         </div>

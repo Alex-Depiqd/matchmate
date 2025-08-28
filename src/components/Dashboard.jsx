@@ -24,11 +24,11 @@ const Dashboard = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
         <button
           onClick={onRefresh}
-          className="btn-secondary text-sm"
+          className="btn-secondary text-sm self-start sm:self-auto"
         >
           Refresh
         </button>

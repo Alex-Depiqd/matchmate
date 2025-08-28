@@ -107,11 +107,11 @@ const FreeBetTracker = ({ bookmakers, onRefresh }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Free Bet Tracker</h2>
         <button
           onClick={() => setShowAddForm(true)}
-          className="btn-primary"
+          className="btn-primary self-start sm:self-auto"
         >
           Add Free Bet
         </button>

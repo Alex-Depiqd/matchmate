@@ -170,11 +170,20 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Bets</h2>
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center justify-between sm:justify-start">
+          <h2 className="text-2xl font-bold text-gray-900 mr-4">Bets</h2>
+          <span className="text-sm text-gray-500">
+            Profit: <span className={`font-medium ${settledProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(settledProfit)}
+            </span>
+          </span>
+        </div>
+        
+        {/* Filter and Sort Controls */}
+        <div className="flex flex-col sm:flex-row gap-3">
           {/* Filter Buttons */}
-          <div className="flex space-x-2">
+          <div className="flex space-x-1">
             <button
               onClick={() => setFilter('all')}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
@@ -259,28 +268,28 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
             return (
               <div key={bet.id} className="card">
                 {/* Header - Always Visible */}
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="font-semibold text-gray-900">{bet.event}</h3>
+                      <h3 className="font-semibold text-gray-900 truncate">{bet.event}</h3>
                       {getStatusBadge(bet.status)}
                     </div>
                     
                     {/* Summary Info - Always Visible */}
-                    <div className="flex items-center space-x-4 text-sm">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                       <div>
                         <span className="text-gray-500">Profit:</span>
-                        <span className={`font-medium ml-2 ${getProfitColor(bet.netProfit || 0)}`}>
+                        <span className={`font-medium ml-1 ${getProfitColor(bet.netProfit || 0)}`}>
                           {bet.status !== 'unsettled' ? formatCurrency(bet.netProfit) : 'Pending'}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-500">Stake:</span>
-                        <span className="font-medium ml-2">{formatCurrency(bet.backStake)}</span>
+                        <span className="font-medium ml-1">{formatCurrency(bet.backStake)}</span>
                       </div>
-                      <div>
+                      <div className="col-span-2 sm:col-span-1">
                         <span className="text-gray-500">Type:</span>
-                        <span className="font-medium ml-2 capitalize">{bet.type}</span>
+                        <span className="font-medium ml-1 capitalize">{bet.type}</span>
                       </div>
                     </div>
 
@@ -295,12 +304,21 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col space-y-2 ml-4">
+                  <div className="flex flex-col items-end space-y-2 flex-shrink-0">
                     <button
                       onClick={() => toggleBetExpansion(bet.id)}
-                      className="text-gray-500 hover:text-gray-700 text-sm px-2 py-1"
+                      className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors"
+                      title={isExpanded ? "Collapse details" : "Expand details"}
                     >
-                      {isExpanded ? '▼' : '▶'}
+                      {isExpanded ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
                     </button>
                     <button
                       onClick={() => handleEditBet(bet)}
@@ -309,20 +327,20 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                       Edit
                     </button>
                     {bet.status === 'unsettled' && (
-                      <>
+                      <div className="flex space-x-1">
                         <button
                           onClick={() => handleSettleBet(bet.id, 'back_won')}
-                          className="btn-success text-sm px-3 py-1"
+                          className="btn-success text-xs px-2 py-1"
                         >
                           Back Won
                         </button>
                         <button
                           onClick={() => handleSettleBet(bet.id, 'lay_won')}
-                          className="btn-danger text-sm px-3 py-1"
+                          className="btn-danger text-xs px-2 py-1"
                         >
                           Lay Won
                         </button>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -330,7 +348,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                 {/* Expandable Details */}
                 {isExpanded && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="text-gray-500">Bookmaker:</span>
                         <span className="font-medium ml-2">{bet.bookmaker}</span>
