@@ -295,6 +295,17 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         notes: ''
       });
       setShowAddForm(true);
+      
+      // Scroll to form after it's rendered
+      setTimeout(() => {
+        const formElement = document.querySelector('.transaction-form');
+        if (formElement) {
+          formElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center'
+          });
+        }
+      }, 200);
     };
 
     const handleDelete = (item) => {
