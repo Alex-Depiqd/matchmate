@@ -24,12 +24,38 @@ function App() {
 
   const loadData = () => {
     try {
-      setBookmakers(dataManager.getBookmakers());
-      setExchanges(dataManager.getExchanges());
-      setBets(dataManager.getBets());
-      setSeed(dataManager.getSeed());
+      const rawBookmakers = dataManager.getBookmakers();
+      const rawExchanges = dataManager.getExchanges();
+      const rawBets = dataManager.getBets();
+      const rawSeed = dataManager.getSeed();
+      
+      // Validate and clean bookmakers data
+      const validBookmakers = Array.isArray(rawBookmakers) 
+        ? rawBookmakers.filter(bm => bm && typeof bm === 'object' && bm.name && typeof bm.name === 'string' && bm.name.trim() !== '')
+        : [];
+      
+      // Validate and clean exchanges data
+      const validExchanges = Array.isArray(rawExchanges)
+        ? rawExchanges.filter(ex => ex && typeof ex === 'object' && ex.name && typeof ex.name === 'string' && ex.name.trim() !== '')
+        : [];
+      
+      // Validate and clean bets data
+      const validBets = Array.isArray(rawBets) ? rawBets : [];
+      
+      // Validate seed data
+      const validSeed = rawSeed && typeof rawSeed === 'object' ? rawSeed : { initialSeed: 0, repaidSoFar: 0 };
+      
+      setBookmakers(validBookmakers);
+      setExchanges(validExchanges);
+      setBets(validBets);
+      setSeed(validSeed);
     } catch (error) {
       console.error('Error in loadData:', error);
+      // Set safe defaults if there's an error
+      setBookmakers([]);
+      setExchanges([]);
+      setBets([]);
+      setSeed({ initialSeed: 0, repaidSoFar: 0 });
     }
   };
 

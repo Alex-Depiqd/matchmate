@@ -840,9 +840,24 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
     );
   } catch (error) {
     console.error("Cashflow component error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      bookmakers: bookmakers,
+      exchanges: exchanges
+    });
     return (
-      <div className="text-center py-10 text-red-600">
-        An unexpected error occurred. Please try refreshing the page or contact support.
+      <div className="text-center py-10">
+        <div className="text-red-600 mb-4">
+          <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
+          <p>An error occurred while loading the Cashflow page.</p>
+        </div>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="btn-primary"
+        >
+          Refresh Page
+        </button>
       </div>
     );
   }
