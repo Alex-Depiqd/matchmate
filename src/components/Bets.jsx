@@ -85,8 +85,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
     if (!editingBet) return;
 
     // Update the bet with new data
-    const updatedBet = {
-      ...editingBet,
+    const updates = {
       event: editFormData.event,
       bookmaker: editFormData.bookmaker,
       exchange: editFormData.exchange,
@@ -100,7 +99,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
       notes: editFormData.notes
     };
 
-    dataManager.updateBet(updatedBet);
+    dataManager.updateBet(editingBet.id, updates);
     setEditingBet(null);
     setEditFormData({});
     onRefresh();
@@ -118,23 +117,23 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
     });
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'back_won':
-        return <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Back Won</span>;
-      case 'lay_won':
-        return <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Lay Won</span>;
-      case 'unsettled':
-        return <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unsettled</span>;
-      default:
-        return <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{status}</span>;
-    }
-  };
-
   const getProfitColor = (profit) => {
     if (profit > 0) return 'text-green-600';
     if (profit < 0) return 'text-red-600';
     return 'text-gray-600';
+  };
+
+  const getBetBackgroundColor = (status) => {
+    switch (status) {
+      case 'back_won':
+        return 'bg-green-50 border-green-200';
+      case 'lay_won':
+        return 'bg-red-50 border-red-200';
+      case 'unsettled':
+        return 'bg-gray-50 border-gray-200';
+      default:
+        return 'bg-white border-gray-200';
+    }
   };
 
   return (
@@ -234,14 +233,13 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
           {filteredBets.map((bet) => {
             const isExpanded = expandedBets.has(bet.id);
             return (
-              <div key={bet.id} className="card">
+              <div key={bet.id} className={`card ${getBetBackgroundColor(bet.status)}`}>
                 {/* Main Bet Info */}
                 <div className="flex items-start justify-between gap-4">
                   {/* Left side - Event and basic info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="mb-4">
                       <h3 className="font-semibold text-gray-900 truncate text-lg">{bet.event}</h3>
-                      {getStatusBadge(bet.status)}
                     </div>
                     
                     {/* Key metrics in a clean grid */}
@@ -274,48 +272,53 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                     )}
                   </div>
 
-                  {/* Right side - Action buttons */}
-                  <div className="flex flex-col items-end gap-3 flex-shrink-0">
-                    <button
-                      onClick={() => toggleBetExpansion(bet.id)}
-                      className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-colors"
-                      title={isExpanded ? "Collapse details" : "Expand details"}
-                    >
-                      {isExpanded ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      )}
-                    </button>
-                    
+                  {/* Right side - Edit button */}
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     <button
                       onClick={() => handleEditBet(bet)}
                       className="btn-secondary text-sm px-4 py-2 whitespace-nowrap"
                     >
                       Edit
                     </button>
-                    
-                    {bet.status === 'unsettled' && (
-                      <div className="flex flex-col gap-2 w-full">
-                        <button
-                          onClick={() => handleSettleBet(bet.id, 'back_won')}
-                          className="btn-success text-sm px-4 py-2 w-full"
-                        >
-                          Back Won
-                        </button>
-                        <button
-                          onClick={() => handleSettleBet(bet.id, 'lay_won')}
-                          className="btn-danger text-sm px-4 py-2 w-full"
-                        >
-                          Lay Won
-                        </button>
-                      </div>
-                    )}
                   </div>
+                </div>
+
+                {/* Action Buttons Row */}
+                <div className="flex justify-between items-center gap-3 mt-4 pt-4 border-t border-gray-200">
+                  {/* Details Button */}
+                  <button
+                    onClick={() => toggleBetExpansion(bet.id)}
+                    className="btn-secondary text-sm px-4 py-2 flex-1 max-w-24"
+                  >
+                    {isExpanded ? 'Hide' : 'Details'}
+                  </button>
+                  
+                  {/* Spacer */}
+                  <div className="flex-1"></div>
+                  
+                  {/* Settlement Buttons (only for unsettled bets) */}
+                  {bet.status === 'unsettled' ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSettleBet(bet.id, 'back_won')}
+                        className="btn-success text-sm px-4 py-2"
+                      >
+                        Back Won
+                      </button>
+                      <button
+                        onClick={() => handleSettleBet(bet.id, 'lay_won')}
+                        className="btn-danger text-sm px-4 py-2"
+                      >
+                        Lay Won
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <span className="text-sm text-gray-500 px-4 py-2">
+                        {bet.status === 'back_won' ? 'Back Won' : 'Lay Won'}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Expandable Details */}

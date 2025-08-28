@@ -5,7 +5,8 @@ const STORAGE_KEYS = {
   BETS: 'matchMate_bets',
   SEED: 'matchMate_seed',
   SETTINGS: 'matchMate_settings',
-  FREE_BETS: 'matchMate_freeBets'
+  FREE_BETS: 'matchMate_freeBets',
+  TRANSACTIONS: 'matchMate_transactions'
 };
 
 // Helper functions for localStorage
@@ -338,6 +339,88 @@ export const dataManager = {
     const filteredFreeBets = freeBets.filter(fb => fb.id !== id);
     dataManager.setFreeBets(filteredFreeBets);
     return filteredFreeBets;
+  },
+
+  // Transactions
+  getTransactions: () => storage.get(STORAGE_KEYS.TRANSACTIONS) || [],
+  setTransactions: (transactions) => storage.set(STORAGE_KEYS.TRANSACTIONS, transactions),
+  addTransaction: (transaction) => {
+    const transactions = dataManager.getTransactions();
+    const newTransaction = {
+      id: transaction.id || `transaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      providerName: transaction.providerName,
+      providerType: transaction.providerType, // 'bookmaker' or 'exchange'
+      transactionType: transaction.transactionType, // 'deposit', 'withdrawal', 'balance_update'
+      amount: parseFloat(transaction.amount),
+      date: transaction.date,
+      notes: transaction.notes || '',
+      createdAt: new Date().toISOString()
+    };
+    transactions.push(newTransaction);
+    dataManager.setTransactions(transactions);
+    
+    // Update provider balances based on transaction type
+    if (transaction.providerType === 'bookmaker') {
+      const bookmakers = dataManager.getBookmakers();
+      const bookmaker = bookmakers.find(bm => bm.name === transaction.providerName);
+      if (bookmaker) {
+        let newTotalDeposits = bookmaker.totalDeposits || 0;
+        let newCurrentBalance = bookmaker.currentBalance || 0;
+        
+        if (transaction.transactionType === 'deposit') {
+          newTotalDeposits += transaction.amount;
+          newCurrentBalance += transaction.amount;
+        } else if (transaction.transactionType === 'withdrawal') {
+          newCurrentBalance -= transaction.amount;
+        } else if (transaction.transactionType === 'balance_update') {
+          newCurrentBalance = transaction.amount;
+        }
+        
+        dataManager.updateBookmaker(bookmaker.id, {
+          totalDeposits: newTotalDeposits,
+          currentBalance: Math.max(0, newCurrentBalance)
+        });
+      }
+    } else if (transaction.providerType === 'exchange') {
+      const exchanges = dataManager.getExchanges();
+      const exchange = exchanges.find(ex => ex.name === transaction.providerName);
+      if (exchange) {
+        let newTotalDeposits = exchange.totalDeposits || 0;
+        let newCurrentBalance = exchange.currentBalance || 0;
+        
+        if (transaction.transactionType === 'deposit') {
+          newTotalDeposits += transaction.amount;
+          newCurrentBalance += transaction.amount;
+        } else if (transaction.transactionType === 'withdrawal') {
+          newCurrentBalance -= transaction.amount;
+        } else if (transaction.transactionType === 'balance_update') {
+          newCurrentBalance = transaction.amount;
+        }
+        
+        dataManager.updateExchange(exchange.id, {
+          totalDeposits: newTotalDeposits,
+          currentBalance: Math.max(0, newCurrentBalance)
+        });
+      }
+    }
+    
+    return newTransaction;
+  },
+  updateTransaction: (id, updates) => {
+    const transactions = dataManager.getTransactions();
+    const index = transactions.findIndex(t => t.id === id);
+    if (index !== -1) {
+      transactions[index] = { ...transactions[index], ...updates };
+      dataManager.setTransactions(transactions);
+      return transactions[index];
+    }
+    return null;
+  },
+  deleteTransaction: (id) => {
+    const transactions = dataManager.getTransactions();
+    const filteredTransactions = transactions.filter(t => t.id !== id);
+    dataManager.setTransactions(filteredTransactions);
+    return true;
   }
 };
 

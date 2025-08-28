@@ -198,21 +198,50 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
     
     if (!formData.name || !formData.amount) return;
 
+    // Check if this is a new provider or existing provider
+    const existingProvider = formData.type === 'bookmaker' 
+      ? bookmakers.find(bm => bm.name === formData.name)
+      : exchanges.find(ex => ex.name === formData.name);
+
+    if (!existingProvider && !editingItem) {
+      // Add new provider first
+      if (formData.type === 'bookmaker') {
+        dataManager.addBookmaker({
+          name: formData.name,
+          notes: formData.notes
+        });
+      } else {
+        dataManager.addExchange({
+          name: formData.name,
+          notes: formData.notes
+        });
+      }
+    } else if (editingItem) {
+      // Update existing provider
+      if (formData.type === 'bookmaker') {
+        dataManager.updateBookmaker(editingItem.id, {
+          name: formData.name,
+          notes: formData.notes
+        });
+      } else {
+        dataManager.updateExchange(editingItem.id, {
+          name: formData.name,
+          notes: formData.notes
+        });
+      }
+    }
+
+    // Add the transaction
     const transactionData = {
-      id: editingItem ? editingItem.id : `transaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      name: formData.name,
-      type: formData.type,
-      amount: parseFloat(formData.amount),
+      providerName: formData.name,
+      providerType: formData.type,
       transactionType: formData.transactionType,
+      amount: parseFloat(formData.amount),
       date: formData.date,
       notes: formData.notes
     };
 
-    if (editingItem) {
-      dataManager.updateTransaction(transactionData);
-    } else {
-      dataManager.addTransaction(transactionData);
-    }
+    dataManager.addTransaction(transactionData);
 
     resetForm();
     setShowAddForm(false);
@@ -239,6 +268,19 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       amount: '',
       transactionType: 'deposit',
       date: new Date().toISOString().split('T')[0],
+      notes: item.notes || ''
+    });
+    setShowAddForm(true);
+  };
+
+  const handleAddTransaction = (item) => {
+    setEditingItem(null); // Not editing, just adding transaction
+    setFormData({
+      type: activeTab === 'bookmakers' ? 'bookmaker' : 'exchange',
+      name: item.name,
+      amount: '',
+      transactionType: 'deposit',
+      date: new Date().toISOString().split('T')[0],
       notes: ''
     });
     setShowAddForm(true);
@@ -248,7 +290,15 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
     const confirmMessage = `Are you sure you want to delete ${item.name}? This will also remove all associated transactions.`;
     
     if (window.confirm(confirmMessage)) {
-      dataManager.deleteProvider(item.id);
+      if (activeTab === 'bookmakers') {
+        const bookmakers = dataManager.getBookmakers();
+        const updatedBookmakers = bookmakers.filter(bm => bm.id !== item.id);
+        dataManager.setBookmakers(updatedBookmakers);
+      } else {
+        const exchanges = dataManager.getExchanges();
+        const updatedExchanges = exchanges.filter(ex => ex.id !== item.id);
+        dataManager.setExchanges(updatedExchanges);
+      }
       onRefresh();
     }
   };
@@ -338,8 +388,8 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             {editingItem ? `Edit ${editingItem.name}` : 
              (formData.name && (bookmakers.some(bm => bm.name === formData.name) || exchanges.some(ex => ex.name === formData.name)) 
-              ? `Update ${formData.name}` 
-              : 'Add New Transaction')}
+              ? `Add Transaction to ${formData.name}` 
+              : 'Add New Provider & Transaction')}
           </h3>
           
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -490,10 +540,10 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                 type="submit"
                 className="btn-primary"
               >
-                {editingItem ? 'Update' : 
+                {editingItem ? 'Update Provider' : 
                  (formData.name && (bookmakers.some(bm => bm.name === formData.name) || exchanges.some(ex => ex.name === formData.name))
-                  ? 'Update Transaction'
-                  : 'Add Transaction')}
+                  ? 'Add Transaction'
+                  : 'Add Provider & Transaction')}
               </button>
             </div>
           </form>
@@ -617,6 +667,12 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
                           Edit
+                        </button>
+                        <button
+                          onClick={() => handleAddTransaction(item)}
+                          className="text-green-600 hover:text-green-800 text-sm font-medium"
+                        >
+                          Add Transaction
                         </button>
                         <button
                           onClick={() => handleDelete(item)}
@@ -754,6 +810,12 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
                           Edit
+                        </button>
+                        <button
+                          onClick={() => handleAddTransaction(item)}
+                          className="text-green-600 hover:text-green-800 text-sm font-medium"
+                        >
+                          Add Transaction
                         </button>
                         <button
                           onClick={() => handleDelete(item)}

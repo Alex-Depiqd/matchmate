@@ -7,9 +7,11 @@ import AddBet from './components/AddBet';
 import Cashflow from './components/Cashflow';
 import Settings from './components/Settings';
 import FreeBetTracker from './components/FreeBetTracker';
+import TransactionHistory from './components/TransactionHistory';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showTransactionHistory, setShowTransactionHistory] = useState(false);
   const [bookmakers, setBookmakers] = useState([]);
   const [exchanges, setExchanges] = useState([]);
   const [bets, setBets] = useState([]);
@@ -35,6 +37,14 @@ function App() {
     loadData();
   };
 
+  const handleNavigateToHistory = () => {
+    setShowTransactionHistory(true);
+  };
+
+  const handleBackToDashboard = () => {
+    setShowTransactionHistory(false);
+  };
+
   // Calculate dashboard metrics
   const totalDeposits = calculateTotalDeposits(bookmakers, exchanges);
   const unsettledBets = bets.filter(bet => bet.status === 'unsettled');
@@ -53,6 +63,18 @@ function App() {
 
   const renderActiveTab = () => {
     try {
+      // Show transaction history if requested
+      if (showTransactionHistory) {
+        return (
+          <TransactionHistory
+            bets={bets}
+            bookmakers={bookmakers}
+            exchanges={exchanges}
+            onBackToDashboard={handleBackToDashboard}
+          />
+        );
+      }
+
       switch (activeTab) {
         case 'dashboard':
           return (
@@ -66,6 +88,7 @@ function App() {
               settledProfit={settledProfit}
               seedProgress={seedProgress}
               onRefresh={refreshData}
+              onNavigateToHistory={handleNavigateToHistory}
             />
           );
         case 'bets':
@@ -152,30 +175,32 @@ function App() {
         </div>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-around">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center py-2 px-3 text-xs font-medium transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? 'text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <span className="text-lg mb-1">{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+      {/* Bottom Navigation - Only show when not in transaction history */}
+      {!showTransactionHistory && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex justify-around">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex flex-col items-center py-2 px-3 text-xs font-medium transition-colors duration-200 ${
+                    activeTab === tab.id
+                      ? 'text-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <span className="text-lg mb-1">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* Bottom padding to account for fixed navigation */}
-      <div className="h-32 pb-safe"></div>
+      {!showTransactionHistory && <div className="h-32 pb-safe"></div>}
     </div>
   );
 }
