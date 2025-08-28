@@ -118,19 +118,19 @@ const FreeBetTracker = ({ bookmakers, onRefresh }) => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card bg-yellow-50 border-yellow-200">
-          <h3 className="text-lg font-semibold text-yellow-900 mb-2">Pending Free Bets</h3>
-          <p className="text-2xl font-bold text-yellow-800">{pendingFreeBets.length}</p>
-          <p className="text-sm text-yellow-700">Total Value: {formatCurrency(totalValue)}</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="card bg-yellow-50 border-yellow-200 p-4">
+          <h3 className="text-base font-semibold text-yellow-900 mb-1">Pending Free Bets</h3>
+          <p className="text-xl font-bold text-yellow-800">{pendingFreeBets.length}</p>
+          <p className="text-xs text-yellow-700">Total Value: {formatCurrency(totalValue)}</p>
         </div>
-        <div className="card bg-green-50 border-green-200">
-          <h3 className="text-lg font-semibold text-green-900 mb-2">Used Free Bets</h3>
-          <p className="text-2xl font-bold text-green-800">{usedFreeBets.length}</p>
+        <div className="card bg-green-50 border-green-200 p-4">
+          <h3 className="text-base font-semibold text-green-900 mb-1">Used Free Bets</h3>
+          <p className="text-xl font-bold text-green-800">{usedFreeBets.length}</p>
         </div>
-        <div className="card bg-blue-50 border-blue-200">
-          <h3 className="text-lg font-semibold text-blue-900 mb-2">Total Tracked</h3>
-          <p className="text-2xl font-bold text-blue-800">{freeBets.length}</p>
+        <div className="card bg-blue-50 border-blue-200 p-4">
+          <h3 className="text-base font-semibold text-blue-900 mb-1">Total Tracked</h3>
+          <p className="text-xl font-bold text-blue-800">{freeBets.length}</p>
         </div>
       </div>
 
