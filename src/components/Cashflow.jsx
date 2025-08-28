@@ -64,7 +64,9 @@ const SearchableDropdown = ({ value, onChange, options, placeholder, className =
     setSearchTerm('');
   };
 
+  // Filter options with null checking
   const filteredOptions = options.filter(option => 
+    option && typeof option === 'string' && 
     option.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
