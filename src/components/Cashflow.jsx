@@ -282,8 +282,12 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
     const handleAddTransaction = (item) => {
       setEditingItem(null); // Not editing, just adding transaction
+      
+      // Determine if this is a bookmaker or exchange based on which array it belongs to
+      const isBookmaker = safeBookmakers.some(bm => bm.id === item.id);
+      
       setFormData({
-        type: activeTab === 'bookmakers' ? 'bookmaker' : 'exchange',
+        type: isBookmaker ? 'bookmaker' : 'exchange',
         name: item.name,
         amount: '',
         transactionType: 'deposit',
