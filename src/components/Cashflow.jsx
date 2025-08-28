@@ -561,12 +561,61 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                 />
               </div>
               
+              {/* Sort Options */}
+              <div className="mb-4 flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="text-sm border border-gray-300 rounded px-2 py-1"
+                  >
+                    <option value="name">Name</option>
+                    <option value="balance">Balance</option>
+                    <option value="deposits">Deposits</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-700">Order:</label>
+                  <button
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    {sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending'}
+                  </button>
+                </div>
+              </div>
+              
               <div className="space-y-3">
                 {safeBookmakers
                   .filter(item => 
                     !bookmakerSearchTerm || 
                     (item.name && item.name.toLowerCase().includes(bookmakerSearchTerm.toLowerCase()))
                   )
+                  .sort((a, b) => {
+                    let aValue, bValue;
+                    
+                    switch (sortBy) {
+                      case 'balance':
+                        aValue = a.currentBalance || 0;
+                        bValue = b.currentBalance || 0;
+                        break;
+                      case 'deposits':
+                        aValue = a.totalDeposits || 0;
+                        bValue = b.totalDeposits || 0;
+                        break;
+                      default:
+                        aValue = a.name && a.name.toLowerCase();
+                        bValue = b.name && b.name.toLowerCase();
+                    }
+                    
+                    if (sortOrder === 'asc') {
+                      return aValue > bValue ? 1 : -1;
+                    } else {
+                      return aValue < bValue ? 1 : -1;
+                    }
+                  })
                   .map((item) => (
                     <div key={item.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                       <div className="flex-1">
