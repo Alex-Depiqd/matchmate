@@ -418,10 +418,24 @@ export const dataManager = {
       }
     } else if (transaction.providerType === 'exchange') {
       const exchanges = dataManager.getExchanges();
+      console.log('Transaction debug:', {
+        providerName: transaction.providerName,
+        availableExchanges: exchanges.map(ex => ex.name),
+        foundExchange: exchanges.find(ex => ex.name === transaction.providerName)
+      });
+      
       const exchange = exchanges.find(ex => ex.name === transaction.providerName);
       if (exchange) {
         let newTotalDeposits = exchange.totalDeposits || 0;
         let newCurrentBalance = exchange.currentBalance || 0;
+        
+        console.log('Exchange balance update:', {
+          exchangeName: exchange.name,
+          oldTotalDeposits: newTotalDeposits,
+          oldCurrentBalance: newCurrentBalance,
+          transactionAmount: transaction.amount,
+          transactionType: transaction.transactionType
+        });
         
         if (transaction.transactionType === 'deposit') {
           newTotalDeposits += transaction.amount;
@@ -432,10 +446,17 @@ export const dataManager = {
           newCurrentBalance = transaction.amount;
         }
         
+        console.log('New values:', {
+          newTotalDeposits,
+          newCurrentBalance
+        });
+        
         dataManager.updateExchange(exchange.id, {
           totalDeposits: newTotalDeposits,
           currentBalance: Math.max(0, newCurrentBalance)
         });
+      } else {
+        console.error('Exchange not found for transaction:', transaction.providerName);
       }
     }
     
