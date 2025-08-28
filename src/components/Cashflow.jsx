@@ -318,41 +318,274 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
     return (
       <div className="space-y-6">
-        {/* Test Header - Simple version to test if component loads */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-900">Cashflow</h2>
-          <div className="text-sm text-gray-600">
-            Bookmakers: {safeBookmakers.length} | Exchanges: {safeExchanges.length}
-          </div>
-        </div>
-
-        {/* Simple Test Content */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Data Test</h3>
-          <div className="space-y-2">
-            <p><strong>Bookmakers:</strong> {safeBookmakers.length} items</p>
-            <p><strong>Exchanges:</strong> {safeExchanges.length} items</p>
-            {safeBookmakers.length > 0 && (
-              <div>
-                <p><strong>First Bookmaker:</strong> {safeBookmakers[0].name}</p>
-              </div>
-            )}
-            {safeExchanges.length > 0 && (
-              <div>
-                <p><strong>First Exchange:</strong> {safeExchanges[0].name}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Add Transaction Button */}
-        <div className="text-center">
           <button
-            onClick={() => alert('Add Transaction button works!')}
-            className="btn-primary"
+            onClick={() => setShowAddForm(true)}
+            className="btn-primary self-start sm:self-auto"
           >
-            Test Add Transaction
+            Add Transaction
           </button>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Deposits</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalDeposits)}</p>
+              </div>
+              <div className="text-3xl">💰</div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Current Balance</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalBalance)}</p>
+              </div>
+              <div className="text-3xl">🏦</div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Net Position</p>
+                <p className={`text-2xl font-bold ${totalBalance >= totalDeposits ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(totalBalance - totalDeposits)}
+                </p>
+              </div>
+              <div className="text-3xl">📊</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Add Transaction Form */}
+        {showAddForm && (
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {editingItem ? `Edit ${editingItem.name}` : 
+               (formData.name && (safeBookmakers.some(bm => bm.name === formData.name) || safeExchanges.some(ex => ex.name === formData.name)) 
+                ? `Add Transaction to ${formData.name}` 
+                : 'Add New Provider & Transaction')}
+            </h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Provider Type */}
+              <div>
+                <label className="label">Provider Type</label>
+                <div className="flex space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="type"
+                      value="bookmaker"
+                      checked={formData.type === 'bookmaker'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value, name: '' }))}
+                      className="mr-2"
+                    />
+                    Bookmaker
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="type"
+                      value="exchange"
+                      checked={formData.type === 'exchange'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value, name: '' }))}
+                      className="mr-2"
+                    />
+                    Exchange
+                  </label>
+                </div>
+              </div>
+
+              {/* Provider Selection */}
+              <div>
+                <label className="label">Provider</label>
+                {showCustomInput ? (
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter custom provider name"
+                    className="input"
+                    required
+                  />
+                ) : (
+                  <SearchableDropdown
+                    value={formData.name}
+                    onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
+                    options={getProviderOptions()}
+                    placeholder="Select provider"
+                    className="w-full"
+                  />
+                )}
+              </div>
+
+              {/* Transaction Type */}
+              <div>
+                <label className="label">Transaction Type</label>
+                <div className="flex space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="transactionType"
+                      value="deposit"
+                      checked={formData.transactionType === 'deposit'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, transactionType: e.target.value }))}
+                      className="mr-2"
+                    />
+                    Deposit
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="transactionType"
+                      value="withdrawal"
+                      checked={formData.transactionType === 'withdrawal'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, transactionType: e.target.value }))}
+                      className="mr-2"
+                    />
+                    Withdrawal
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="transactionType"
+                      value="balance_update"
+                      checked={formData.transactionType === 'balance_update'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, transactionType: e.target.value }))}
+                      className="mr-2"
+                    />
+                    Balance Update
+                  </label>
+                </div>
+              </div>
+
+              {/* Amount and Date */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Amount (£)</label>
+                  <input
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    className="input"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="label">Date</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    className="input"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="label">Notes (Optional)</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Any additional notes..."
+                  className="input"
+                  rows="3"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetForm();
+                    setShowAddForm(false);
+                  }}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                >
+                  {editingItem ? 'Update Provider' : 
+                   (formData.name && (safeBookmakers.some(bm => bm.name === formData.name) || safeExchanges.some(ex => ex.name === formData.name))
+                    ? 'Add Transaction'
+                    : 'Add Provider & Transaction')}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Simple Provider Lists - No filtering for now */}
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Bookmakers ({safeBookmakers.length})
+          </h3>
+          <div className="space-y-3">
+            {safeBookmakers.map((item) => (
+              <div key={item.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{item.name}</h4>
+                  <div className="text-sm text-gray-600 mt-1">
+                    <div>Balance: {formatCurrency(item.currentBalance || 0)}</div>
+                    <div>Deposits: {formatCurrency(item.totalDeposits || 0)}</div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleAddTransaction(item)}
+                    className="text-green-600 hover:text-green-800 text-sm font-medium"
+                  >
+                    Add Transaction
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Exchanges ({safeExchanges.length})
+          </h3>
+          <div className="space-y-3">
+            {safeExchanges.map((item) => (
+              <div key={item.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{item.name}</h4>
+                  <div className="text-sm text-gray-600 mt-1">
+                    <div>Balance: {formatCurrency(item.currentBalance || 0)}</div>
+                    <div>Deposits: {formatCurrency(item.totalDeposits || 0)}</div>
+                    <div>Exposure: {formatCurrency(item.exposure || 0)}</div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleAddTransaction(item)}
+                    className="text-green-600 hover:text-green-800 text-sm font-medium"
+                  >
+                    Add Transaction
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
