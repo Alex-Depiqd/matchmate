@@ -155,7 +155,8 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       amount: '',
       transactionType: 'deposit',
       date: new Date().toISOString().split('T')[0],
-      notes: ''
+      notes: '',
+      transferDestination: ''
     });
 
     const totalDeposits = safeBookmakers.reduce((sum, bm) => sum + (bm.totalDeposits || 0), 0) +
@@ -238,17 +239,49 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         }
       }
 
-      // Add the transaction
-      const transactionData = {
-        providerName: formData.name,
-        providerType: formData.type,
-        transactionType: formData.transactionType,
-        amount: parseFloat(formData.amount),
-        date: formData.date,
-        notes: formData.notes
-      };
-
-      dataManager.addTransaction(transactionData);
+      // Handle transfers differently - create two transactions
+      if (formData.transactionType === 'transfer') {
+        if (!formData.transferDestination) {
+          alert('Please select a destination for the transfer');
+          return;
+        }
+        
+        // Create source transaction (money leaving)
+        const sourceTransaction = {
+          providerName: formData.name,
+          providerType: formData.type,
+          transactionType: 'transfer',
+          amount: parseFloat(formData.amount),
+          date: formData.date,
+          notes: `Transfer to ${formData.transferDestination}: ${formData.notes}`.trim()
+        };
+        
+        // Create destination transaction (money arriving)
+        const destinationTransaction = {
+          providerName: formData.transferDestination,
+          providerType: formData.type, // Assume same type for simplicity
+          transactionType: 'transfer_in', // Special type for incoming transfers
+          amount: parseFloat(formData.amount),
+          date: formData.date,
+          notes: `Transfer from ${formData.name}: ${formData.notes}`.trim()
+        };
+        
+        // Add both transactions
+        dataManager.addTransaction(sourceTransaction);
+        dataManager.addTransaction(destinationTransaction);
+      } else {
+        // Regular transaction (deposit, withdrawal, balance_update)
+        const transactionData = {
+          providerName: formData.name,
+          providerType: formData.type,
+          transactionType: formData.transactionType,
+          amount: parseFloat(formData.amount),
+          date: formData.date,
+          notes: formData.notes
+        };
+        
+        dataManager.addTransaction(transactionData);
+      }
 
       resetForm();
       setShowAddForm(false);
@@ -262,7 +295,8 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         amount: '',
         transactionType: 'deposit',
         date: new Date().toISOString().split('T')[0],
-        notes: ''
+        notes: '',
+        transferDestination: ''
       });
       setEditingItem(null);
     };
@@ -275,7 +309,8 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         amount: '',
         transactionType: 'deposit',
         date: new Date().toISOString().split('T')[0],
-        notes: item.notes || ''
+        notes: item.notes || '',
+        transferDestination: ''
       });
       setShowAddForm(true);
     };
@@ -292,7 +327,8 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         amount: '',
         transactionType: 'deposit',
         date: new Date().toISOString().split('T')[0],
-        notes: ''
+        notes: '',
+        transferDestination: ''
       });
       setShowAddForm(true);
       
@@ -444,6 +480,31 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                 )}
               </div>
 
+              {/* Transfer Destination (only show for transfers) */}
+              {formData.transactionType === 'transfer' && (
+                <div>
+                  <label className="label">Transfer To</label>
+                  {showCustomInput ? (
+                    <input
+                      type="text"
+                      value={formData.transferDestination || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, transferDestination: e.target.value }))}
+                      placeholder="Enter destination provider name"
+                      className="input"
+                      required
+                    />
+                  ) : (
+                    <SearchableDropdown
+                      value={formData.transferDestination || ''}
+                      onChange={(value) => setFormData(prev => ({ ...prev, transferDestination: value }))}
+                      options={getProviderOptions()}
+                      placeholder="Select destination provider"
+                      className="w-full"
+                    />
+                  )}
+                </div>
+              )}
+
               {/* Transaction Type */}
               <div>
                 <label className="label">Transaction Type</label>
@@ -469,6 +530,17 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                       className="mr-2"
                     />
                     Withdrawal
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="transactionType"
+                      value="transfer"
+                      checked={formData.transactionType === 'transfer'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, transactionType: e.target.value }))}
+                      className="mr-2"
+                    />
+                    Transfer
                   </label>
                   <label className="flex items-center">
                     <input

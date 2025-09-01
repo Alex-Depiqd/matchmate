@@ -386,7 +386,7 @@ export const dataManager = {
       id: transaction.id || `transaction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       providerName: transaction.providerName,
       providerType: transaction.providerType, // 'bookmaker' or 'exchange'
-      transactionType: transaction.transactionType, // 'deposit', 'withdrawal', 'balance_update'
+      transactionType: transaction.transactionType, // 'deposit', 'withdrawal', 'transfer', 'transfer_in', 'balance_update'
       amount: parseFloat(transaction.amount),
       date: transaction.date,
       notes: transaction.notes || '',
@@ -408,6 +408,12 @@ export const dataManager = {
           newCurrentBalance += transaction.amount;
         } else if (transaction.transactionType === 'withdrawal') {
           newCurrentBalance -= transaction.amount;
+        } else if (transaction.transactionType === 'transfer') {
+          // For transfers, only reduce the balance, don't affect total deposits
+          newCurrentBalance -= transaction.amount;
+        } else if (transaction.transactionType === 'transfer_in') {
+          // For incoming transfers, only increase the balance, don't affect total deposits
+          newCurrentBalance += transaction.amount;
         } else if (transaction.transactionType === 'balance_update') {
           newCurrentBalance = transaction.amount;
         }
@@ -443,6 +449,12 @@ export const dataManager = {
           newCurrentBalance += transaction.amount;
         } else if (transaction.transactionType === 'withdrawal') {
           newCurrentBalance -= transaction.amount;
+        } else if (transaction.transactionType === 'transfer') {
+          // For transfers, only reduce the balance, don't affect total deposits
+          newCurrentBalance -= transaction.amount;
+        } else if (transaction.transactionType === 'transfer_in') {
+          // For incoming transfers, only increase the balance, don't affect total deposits
+          newCurrentBalance += transaction.amount;
         } else if (transaction.transactionType === 'balance_update') {
           newCurrentBalance = transaction.amount;
         }
