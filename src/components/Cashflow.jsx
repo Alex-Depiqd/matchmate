@@ -363,9 +363,9 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
     const getProviderOptions = () => {
       if (formData.type === 'bookmaker') {
-        return UK_BOOKMAKERS;
+        return UK_BOOKMAKERS.map(bm => bm.name);
       } else {
-        return UK_EXCHANGES;
+        return UK_EXCHANGES.map(ex => ex.name);
       }
     };
 
