@@ -148,10 +148,17 @@ const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) 
     const runningBalances = [];
     
     filteredTransactions.forEach(transaction => {
-      balance += transaction.amount;
+      // Ensure the amount is a valid number
+      const validAmount = parseFloat(transaction.amount || 0) || 0;
+      balance += validAmount;
+      
+      // Ensure the running balance is also a valid number
+      const validBalance = parseFloat(balance) || 0;
+      
       runningBalances.push({
         ...transaction,
-        runningBalance: balance
+        amount: validAmount, // Update the amount to be valid
+        runningBalance: validBalance
       });
     });
     
@@ -217,8 +224,8 @@ const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) 
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Total Profit/Loss</p>
-              <p className={`text-2xl font-bold ${allTransactions.reduce((sum, t) => sum + t.amount, 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(allTransactions.reduce((sum, t) => sum + t.amount, 0))}
+              <p className={`text-2xl font-bold ${allTransactions.reduce((sum, t) => sum + (parseFloat(t.amount || 0) || 0), 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(allTransactions.reduce((sum, t) => sum + (parseFloat(t.amount || 0) || 0), 0))}
               </p>
             </div>
             <div className="text-3xl">📈</div>
@@ -338,10 +345,10 @@ const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) 
           </span>
           <div className="flex flex-col sm:flex-row gap-4">
             <span className="text-gray-600">
-              Total: <span className="font-medium">{formatCurrency(transactionsWithBalance.reduce((sum, t) => sum + t.amount, 0))}</span>
+              Total: <span className="font-medium">{formatCurrency(transactionsWithBalance.reduce((sum, t) => sum + (parseFloat(t.amount || 0) || 0), 0))}</span>
             </span>
             <span className="text-gray-600">
-              Final Balance: <span className="font-medium">{formatCurrency(transactionsWithBalance.length > 0 ? transactionsWithBalance[transactionsWithBalance.length - 1].runningBalance : 0)}</span>
+              Final Balance: <span className="font-medium">{formatCurrency(transactionsWithBalance.length > 0 ? (parseFloat(transactionsWithBalance[transactionsWithBalance.length - 1].runningBalance || 0) || 0) : 0)}</span>
             </span>
           </div>
         </div>
