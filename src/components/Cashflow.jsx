@@ -432,20 +432,20 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
         {/* Add Transaction Form */}
         {showAddForm && (
-          <div className="card transaction-form border-2 border-blue-200 bg-blue-50 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card transaction-form border-2 border-blue-200 bg-blue-50 shadow-lg overflow-hidden">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
               {editingItem ? `Edit ${editingItem.name}` : 
                (formData.name && (safeBookmakers.some(bm => bm.name === formData.name) || safeExchanges.some(ex => ex.name === formData.name)) 
                 ? `Add Transaction to ${formData.name}` 
                 : 'Add New Provider & Transaction')}
             </h3>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* Provider Type */}
               <div>
-                <label className="label">Provider Type</label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
+                <label className="label text-sm sm:text-base">Provider Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center text-sm sm:text-base">
                     <input
                       type="radio"
                       name="type"
@@ -456,7 +456,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                     />
                     Bookmaker
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center text-sm sm:text-base">
                     <input
                       type="radio"
                       name="type"
@@ -472,7 +472,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
               {/* Provider Selection */}
               <div>
-                <label className="label">Provider</label>
+                <label className="label text-sm sm:text-base">Provider</label>
                 <SearchableDropdown
                   value={formData.name}
                   onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
@@ -489,9 +489,14 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Enter custom provider name"
-                      className="input"
+                      className="input min-h-[44px] text-base"
+                      style={{ fontSize: '16px' }} // Prevents zoom on iOS
+                      maxLength="100"
                       required
                     />
+                    <div className="text-xs sm:text-sm text-gray-500 mt-1 text-right">
+                      {formData.name.length}/100 characters
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -499,16 +504,23 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
               {/* Transfer Destination (only show for transfers) */}
               {formData.transactionType === 'transfer' && (
                 <div>
-                  <label className="label">Transfer To</label>
+                  <label className="label text-sm sm:text-base">Transfer To</label>
                   {showCustomInput ? (
-                    <input
-                      type="text"
-                      value={formData.transferDestination || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, transferDestination: e.target.value }))}
-                      placeholder="Enter destination provider name"
-                      className="input"
-                      required
-                    />
+                    <div>
+                      <input
+                        type="text"
+                        value={formData.transferDestination || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, transferDestination: e.target.value }))}
+                        placeholder="Enter destination provider name"
+                        className="input min-h-[44px] text-base"
+                        style={{ fontSize: '16px' }} // Prevents zoom on iOS
+                        maxLength="100"
+                        required
+                      />
+                      <div className="text-xs sm:text-sm text-gray-500 mt-1 text-right">
+                        {(formData.transferDestination || '').length}/100 characters
+                      </div>
+                    </div>
                   ) : (
                     <SearchableDropdown
                       value={formData.transferDestination || ''}
@@ -523,9 +535,9 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
               {/* Transaction Type */}
               <div>
-                <label className="label">Transaction Type</label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
+                <label className="label text-sm sm:text-base">Transaction Type</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <label className="flex items-center text-sm sm:text-base">
                     <input
                       type="radio"
                       name="transactionType"
@@ -536,7 +548,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                     />
                     Deposit
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center text-sm sm:text-base">
                     <input
                       type="radio"
                       name="transactionType"
@@ -547,7 +559,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                     />
                     Withdrawal
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center text-sm sm:text-base">
                     <input
                       type="radio"
                       name="transactionType"
@@ -558,7 +570,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                     />
                     Transfer
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center text-sm sm:text-base">
                     <input
                       type="radio"
                       name="transactionType"
@@ -573,9 +585,9 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
               </div>
 
               {/* Amount and Date */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="label">Amount (£)</label>
+                  <label className="label text-sm sm:text-base">Amount (£)</label>
                   <input
                     type="number"
                     value={formData.amount}
@@ -583,17 +595,19 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                     step="0.01"
                     min="0"
                     placeholder="0.00"
-                    className="input"
+                    className="input min-h-[44px] text-base"
+                    style={{ fontSize: '16px' }} // Prevents zoom on iOS
                     required
                   />
                 </div>
                 <div>
-                  <label className="label">Date</label>
+                  <label className="label text-sm sm:text-base">Date</label>
                   <input
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                    className="input"
+                    className="input min-h-[44px] text-base"
+                    style={{ fontSize: '16px' }} // Prevents zoom on iOS
                     required
                   />
                 </div>
@@ -601,31 +615,36 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
 
               {/* Notes */}
               <div>
-                <label className="label">Notes (Optional)</label>
+                <label className="label text-sm sm:text-base">Notes (Optional)</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                   placeholder="Any additional notes..."
-                  className="input"
+                  className="input min-h-[44px] text-base"
+                  style={{ fontSize: '16px' }} // Prevents zoom on iOS
                   rows="3"
+                  maxLength="500"
                 />
+                                    <div className="text-xs sm:text-sm text-gray-500 mt-1 text-right">
+                      {formData.notes.length}/500 characters
+                    </div>
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end space-x-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3">
                 <button
                   type="button"
                   onClick={() => {
                     resetForm();
                     setShowAddForm(false);
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm sm:text-base py-2 sm:py-2.5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="btn-primary text-sm sm:text-base py-2 sm:py-2.5"
                 >
                   {editingItem ? 'Update Provider' : 
                    (formData.name && (safeBookmakers.some(bm => bm.name === formData.name) || safeExchanges.some(ex => ex.name === formData.name))
