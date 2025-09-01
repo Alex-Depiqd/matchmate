@@ -369,6 +369,19 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       }
     };
 
+    const getExistingProviderOptions = () => {
+      // Get all existing providers (both bookmakers and exchanges)
+      const allProviders = [
+        ...safeBookmakers.map(bm => ({ name: bm.name, type: 'bookmaker' })),
+        ...safeExchanges.map(ex => ({ name: ex.name, type: 'exchange' }))
+      ];
+      
+      // Filter out the current source provider
+      return allProviders
+        .filter(provider => provider.name !== formData.name)
+        .map(provider => provider.name);
+    };
+
     return (
       <div className="space-y-6">
         {/* Header */}
@@ -497,7 +510,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                     <SearchableDropdown
                       value={formData.transferDestination || ''}
                       onChange={(value) => setFormData(prev => ({ ...prev, transferDestination: value }))}
-                      options={getProviderOptions()}
+                      options={getExistingProviderOptions()}
                       placeholder="Select destination provider"
                       className="w-full"
                     />
