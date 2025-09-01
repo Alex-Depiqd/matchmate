@@ -84,27 +84,26 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
 
   const handleSaveEdit = () => {
     if (!editingBet) return;
-
-    // Update the bet with new data
-    const updates = {
-      event: editFormData.event,
-      bookmaker: editFormData.bookmaker,
-      exchange: editFormData.exchange,
-      type: editFormData.type,
-      backStake: parseFloat(editFormData.backStake),
-      backOdds: parseFloat(editFormData.backOdds),
-      layOdds: parseFloat(editFormData.layOdds),
-      layStake: parseFloat(editFormData.layStake),
-      liability: parseFloat(editFormData.liability),
-      status: editFormData.status,
-      betDate: editFormData.betDate,
-      notes: editFormData.notes
+    
+    const updatedBet = {
+      ...editingBet,
+      ...editFormData,
+      updatedAt: new Date().toISOString()
     };
-
-    dataManager.updateBet(editingBet.id, updates);
+    
+    dataManager.updateBet(editingBet.id, updatedBet);
     setEditingBet(null);
     setEditFormData({});
-    onRefresh();
+  };
+
+  const handleDeleteBet = () => {
+    if (!editingBet) return;
+    
+    if (window.confirm(`Are you sure you want to delete this bet: "${editingBet.event}"? This action cannot be undone.`)) {
+      dataManager.deleteBet(editingBet.id);
+      setEditingBet(null);
+      setEditFormData({});
+    }
   };
 
   const toggleBetExpansion = (betId) => {
@@ -545,20 +544,32 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex justify-between items-center pt-4">
+                  {/* Left side - Delete button */}
                   <button
                     type="button"
-                    onClick={() => setEditingBet(null)}
-                    className="btn-secondary"
+                    onClick={handleDeleteBet}
+                    className="btn-danger"
                   >
-                    Cancel
+                    Delete Bet
                   </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                  >
-                    Save Changes
-                  </button>
+                  
+                  {/* Right side - Cancel and Save */}
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditingBet(null)}
+                      className="btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
