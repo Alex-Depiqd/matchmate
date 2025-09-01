@@ -15,7 +15,7 @@ const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) 
       transactions.push({
         id: bet.id,
         type: 'bet',
-        date: new Date(bet.createdAt),
+        date: new Date(bet.betDate || bet.createdAt),
         description: bet.event,
         amount: bet.netProfit || 0,
         status: bet.status,

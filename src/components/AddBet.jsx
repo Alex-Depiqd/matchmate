@@ -149,7 +149,8 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         backOdds: '',
         layOdds: '',
         layStake: '',
-        liability: ''
+        liability: '',
+        betDate: new Date().toISOString().split('T')[0]
       };
     } catch (error) {
       console.error('Error loading saved form data:', error);
@@ -162,7 +163,8 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         backOdds: '',
         layOdds: '',
         layStake: '',
-        liability: ''
+        liability: '',
+        betDate: new Date().toISOString().split('T')[0]
       };
     }
   };
@@ -291,7 +293,8 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
       backOdds: '',
       layOdds: '',
       layStake: '',
-      liability: ''
+      liability: '',
+      betDate: new Date().toISOString().split('T')[0]
     };
     setFormData(emptyForm);
     setSelectedFreeBet(null);
@@ -386,7 +389,8 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
         layStake: parseFloat(formData.layStake),
         layOdds: parseFloat(formData.layOdds),
         liability: parseFloat(formData.liability),
-        status: 'unsettled'
+        status: 'unsettled',
+        betDate: formData.betDate
       };
 
       dataManager.addBetAndUpdateBalances(newBet);
@@ -609,6 +613,22 @@ const AddBet = ({ bookmakers, exchanges, onBetAdded }) => {
               style={{ fontSize: '16px' }} // Prevents zoom on iOS
             />
             {errors.event && <p className="text-red-600 text-sm mt-1">{errors.event}</p>}
+          </div>
+
+          {/* Bet Date */}
+          <div>
+            <label className="label">Bet Date</label>
+            <input
+              type="date"
+              name="betDate"
+              value={formData.betDate || new Date().toISOString().split('T')[0]}
+              onChange={handleInputChange}
+              className="input min-h-[44px] text-base"
+              style={{ fontSize: '16px' }} // Prevents zoom on iOS
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Use this to backdate bets. Defaults to today's date.
+            </p>
           </div>
 
           {/* Result Selection (Optional) */}

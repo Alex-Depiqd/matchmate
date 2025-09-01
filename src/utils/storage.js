@@ -205,6 +205,7 @@ export const dataManager = {
       netProfit: bet.netProfit || 0,
       commission: bet.commission || 0,
       notes: bet.notes || '',
+      betDate: bet.betDate || new Date().toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
       settledAt: null
     };

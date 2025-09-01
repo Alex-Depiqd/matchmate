@@ -21,8 +21,8 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
       return true;
     })
     .sort((a, b) => {
-      const dateA = new Date(a.createdAt || a.id);
-      const dateB = new Date(b.createdAt || b.id);
+      const dateA = new Date(a.betDate || a.createdAt || a.id);
+      const dateB = new Date(b.betDate || b.createdAt || b.id);
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
 
@@ -50,6 +50,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
       layStake: bet.layStake.toString(),
       liability: bet.liability.toString(),
       status: bet.status,
+      betDate: bet.betDate || new Date(bet.createdAt).toISOString().split('T')[0],
       notes: bet.notes || ''
     });
     setManualLayStake(false);
@@ -96,6 +97,7 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
       layStake: parseFloat(editFormData.layStake),
       liability: parseFloat(editFormData.liability),
       status: editFormData.status,
+      betDate: editFormData.betDate,
       notes: editFormData.notes
     };
 
@@ -260,7 +262,9 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Date</div>
-                        <div className="font-semibold text-lg text-gray-900">{new Date(bet.createdAt).toLocaleDateString()}</div>
+                        <div className="font-semibold text-lg text-gray-900">
+                          {bet.betDate ? new Date(bet.betDate).toLocaleDateString() : new Date(bet.createdAt).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
 
@@ -384,6 +388,17 @@ const Bets = ({ bets, bookmakers, exchanges, onRefresh }) => {
                     onChange={(e) => handleEditFormChange('event', e.target.value)}
                     className="input"
                     required
+                  />
+                </div>
+
+                {/* Bet Date */}
+                <div>
+                  <label className="label">Bet Date</label>
+                  <input
+                    type="date"
+                    value={editFormData.betDate || ''}
+                    onChange={(e) => handleEditFormChange('betDate', e.target.value)}
+                    className="input"
                   />
                 </div>
 

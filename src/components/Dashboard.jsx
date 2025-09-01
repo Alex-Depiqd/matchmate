@@ -203,6 +203,9 @@ const Dashboard = ({
                   <p className="text-sm text-gray-500">
                     {bet.bookmaker} • {bet.type === 'qualifying' ? 'Qualifying' : 'Free Bet'}
                   </p>
+                  <p className="text-xs text-gray-400">
+                    {bet.betDate ? new Date(bet.betDate).toLocaleDateString() : new Date(bet.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className={`font-medium ${
