@@ -91,16 +91,14 @@ export const UK_BOOKMAKERS = [
   { name: 'Unibet', category: 'Major' },
   { name: 'VBet', category: 'Major' },
   { name: 'Virgin Bet', category: 'Major' },
-  { name: 'William Hill', category: 'Major' },
-  { name: 'Custom...', category: 'Custom' }
+  { name: 'William Hill', category: 'Major' }
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export const UK_EXCHANGES = [
   { name: 'Betdaq', category: 'Exchange', defaultCommission: 0.0 },
   { name: 'Betfair Exchange', category: 'Exchange', defaultCommission: 5.0 },
   { name: 'Matchbook', category: 'Exchange', defaultCommission: 0.0 },
-  { name: 'Smarkets', category: 'Exchange', defaultCommission: 0.0 },
-  { name: 'Custom...', category: 'Custom' }
+  { name: 'Smarkets', category: 'Exchange', defaultCommission: 0.0 }
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 // Helper function to get all bookmakers and exchanges
