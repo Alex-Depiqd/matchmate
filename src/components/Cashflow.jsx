@@ -637,19 +637,44 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
           </div>
         )}
 
-        {/* Simple Provider Lists - No filtering for now */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Bookmakers ({safeBookmakers.length})
-            </h3>
-            <button
-              onClick={() => setIsBookmakersCollapsed(!isBookmakersCollapsed)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              {isBookmakersCollapsed ? '▼' : '▲'}
-            </button>
-          </div>
+        {/* Tab Navigation */}
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
+          <button
+            onClick={() => setActiveTab('bookmakers')}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors duration-200 ${
+              activeTab === 'bookmakers'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Bookmakers ({safeBookmakers.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('exchanges')}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors duration-200 ${
+              activeTab === 'exchanges'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Exchanges ({safeExchanges.length})
+          </button>
+        </div>
+
+        {/* Bookmakers Section */}
+        {activeTab === 'bookmakers' && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Bookmakers ({safeBookmakers.length})
+              </h3>
+              <button
+                onClick={() => setIsBookmakersCollapsed(!isBookmakersCollapsed)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                {isBookmakersCollapsed ? '▼' : '▲'}
+              </button>
+            </div>
           
           {!isBookmakersCollapsed && (
             <>
@@ -754,75 +779,79 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
             </>
           )}
         </div>
+        )}
 
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Exchanges ({safeExchanges.length})
-            </h3>
-            <button
-              onClick={() => setIsExchangesCollapsed(!isExchangesCollapsed)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              {isExchangesCollapsed ? '▼' : '▲'}
-            </button>
-          </div>
-          
-          {!isExchangesCollapsed && (
-            <>
-              {/* Search Bar */}
-              <div className="mb-4">
-                <input
-                  type="text"
-                  placeholder="Search exchanges..."
-                  value={exchangeSearchTerm}
-                  onChange={(e) => setExchangeSearchTerm(e.target.value)}
-                  className="input w-full"
-                />
-              </div>
-              
-              <div className="space-y-3">
-                {safeExchanges
-                  .filter(item => 
-                    !exchangeSearchTerm || 
-                    (item.name && item.name.toLowerCase().includes(exchangeSearchTerm.toLowerCase()))
-                  )
-                  .map((item) => (
-                    <div key={item.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{item.name}</h4>
-                        <div className="text-sm text-gray-600 mt-1">
-                          <div>Balance: {formatCurrency(item.currentBalance || 0)}</div>
-                          <div>Deposits: {formatCurrency(item.totalDeposits || 0)}</div>
-                          <div>Exposure: {formatCurrency(item.exposure || 0)}</div>
+        {/* Exchanges Section */}
+        {activeTab === 'exchanges' && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Exchanges ({safeExchanges.length})
+              </h3>
+              <button
+                onClick={() => setIsExchangesCollapsed(!isExchangesCollapsed)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                {isExchangesCollapsed ? '▼' : '▲'}
+              </button>
+            </div>
+            
+            {!isExchangesCollapsed && (
+              <>
+                {/* Search Bar */}
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search exchanges..."
+                    value={exchangeSearchTerm}
+                    onChange={(e) => setExchangeSearchTerm(e.target.value)}
+                    className="input w-full"
+                  />
+                </div>
+                
+                <div className="space-y-3">
+                  {safeExchanges
+                    .filter(item => 
+                      !exchangeSearchTerm || 
+                      (item.name && item.name.toLowerCase().includes(exchangeSearchTerm.toLowerCase()))
+                    )
+                    .map((item) => (
+                      <div key={item.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{item.name}</h4>
+                          <div className="text-sm text-gray-600 mt-1">
+                            <div>Balance: {formatCurrency(item.currentBalance || 0)}</div>
+                            <div>Deposits: {formatCurrency(item.totalDeposits || 0)}</div>
+                            <div>Exposure: {formatCurrency(item.exposure || 0)}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleAddTransaction(item)}
+                            className="text-green-600 hover:text-green-800 text-sm font-medium"
+                          >
+                            Add Transaction
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleAddTransaction(item)}
-                          className="text-green-600 hover:text-green-800 text-sm font-medium"
-                        >
-                          Add Transaction
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </>
-          )}
-        </div>
+                    ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     );
   } catch (error) {
