@@ -156,8 +156,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
       transactionType: 'deposit',
       date: new Date().toISOString().split('T')[0],
       notes: '',
-      transferDestination: '',
-      showCustomInput: false
+      transferDestination: ''
     });
 
     const totalDeposits = safeBookmakers.reduce((sum, bm) => sum + (bm.totalDeposits || 0), 0) +
@@ -297,8 +296,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         transactionType: 'deposit',
         date: new Date().toISOString().split('T')[0],
         notes: '',
-        transferDestination: '',
-        showCustomInput: false
+        transferDestination: ''
       });
       setEditingItem(null);
     };
@@ -312,8 +310,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         transactionType: 'deposit',
         date: new Date().toISOString().split('T')[0],
         notes: item.notes || '',
-        transferDestination: '',
-        showCustomInput: false
+        transferDestination: ''
       });
       setShowAddForm(true);
     };
@@ -331,8 +328,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
         transactionType: 'deposit',
         date: new Date().toISOString().split('T')[0],
         notes: '',
-        transferDestination: '',
-        showCustomInput: false
+        transferDestination: ''
       });
       setShowAddForm(true);
       
@@ -479,24 +475,14 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                 <label className="label">Provider</label>
                 <SearchableDropdown
                   value={formData.name}
-                  onChange={(value) => {
-                    if (value === 'custom') {
-                      // Show custom input when "Custom" is selected
-                      setFormData(prev => ({ ...prev, name: '', showCustomInput: true }));
-                    } else {
-                      setFormData(prev => ({ ...prev, name: value, showCustomInput: false }));
-                    }
-                  }}
-                  options={[
-                    ...getProviderOptions(),
-                    { value: 'custom', label: '➕ Custom Provider' }
-                  ]}
-                  placeholder="Select provider or choose Custom"
+                  onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
+                  options={getProviderOptions()}
+                  placeholder="Select provider"
                   className="w-full"
                 />
                 
-                {/* Custom Provider Input (only show when Custom is selected) */}
-                {formData.showCustomInput && (
+                {/* Custom Provider Input (show when no provider selected or custom name entered) */}
+                {!formData.name || !getProviderOptions().includes(formData.name) ? (
                   <div className="mt-3">
                     <input
                       type="text"
@@ -507,7 +493,7 @@ const Cashflow = ({ bookmakers, exchanges, onRefresh }) => {
                       required
                     />
                   </div>
-                )}
+                ) : null}
               </div>
 
               {/* Transfer Destination (only show for transfers) */}
