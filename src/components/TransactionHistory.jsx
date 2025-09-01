@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { formatCurrency } from '../utils/calculations';
+import { dataManager } from '../utils/storage';
 
 const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) => {
   const [filter, setFilter] = useState('all'); // 'all', 'today', '7days', 'month', 'quarter'
@@ -85,6 +86,53 @@ const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) 
       }
     });
 
+    // Add new transaction system transactions
+    const newTransactions = dataManager.getTransactions();
+    console.log('New transactions loaded:', newTransactions);
+    newTransactions.forEach(transaction => {
+      let transactionType = 'transaction';
+      let description = '';
+      
+      // Convert new transaction format to display format
+      switch (transaction.transactionType) {
+        case 'deposit':
+          transactionType = 'deposit';
+          description = `Deposit to ${transaction.providerName}`;
+          break;
+        case 'withdrawal':
+          transactionType = 'withdrawal';
+          description = `Withdrawal from ${transaction.providerName}`;
+          break;
+        case 'transfer':
+          transactionType = 'transfer';
+          description = `Transfer from ${transaction.providerName}`;
+          break;
+        case 'transfer_in':
+          transactionType = 'transfer';
+          description = `Transfer to ${transaction.providerName}`;
+          break;
+        case 'balance_update':
+          transactionType = 'balance_update';
+          description = `Balance update for ${transaction.providerName}`;
+          break;
+        default:
+          transactionType = 'transaction';
+          description = `${transaction.transactionType} for ${transaction.providerName}`;
+      }
+
+      transactions.push({
+        id: transaction.id,
+        type: transactionType,
+        date: new Date(transaction.date),
+        description: description,
+        amount: transaction.transactionType === 'withdrawal' ? -transaction.amount : transaction.amount,
+        status: 'completed',
+        provider: transaction.providerName,
+        notes: transaction.notes
+      });
+    });
+
+    console.log('All transactions combined:', transactions);
     return transactions;
   };
 
@@ -175,6 +223,10 @@ const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) 
         return '💰';
       case 'withdrawal':
         return '💸';
+      case 'transfer':
+        return '🔄';
+      case 'balance_update':
+        return '⚖️';
       default:
         return '📊';
     }
@@ -192,6 +244,10 @@ const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) 
       if (status === 'lay_won') return 'bg-red-50 border-red-200';
       return 'bg-gray-50 border-gray-200';
     }
+    if (type === 'deposit') return 'bg-green-50 border-green-200';
+    if (type === 'withdrawal') return 'bg-red-50 border-red-200';
+    if (type === 'transfer') return 'bg-blue-50 border-blue-200';
+    if (type === 'balance_update') return 'bg-yellow-50 border-yellow-200';
     return 'bg-white border-gray-200';
   };
 
@@ -317,8 +373,11 @@ const TransactionHistory = ({ bets, bookmakers, exchanges, onBackToDashboard }) 
                           <span>• Stake: {formatCurrency(transaction.stake)}</span>
                         </>
                       )}
-                      {(transaction.type === 'deposit' || transaction.type === 'withdrawal') && (
+                      {(transaction.type === 'deposit' || transaction.type === 'withdrawal' || transaction.type === 'transfer' || transaction.type === 'balance_update') && (
                         <span>• {transaction.provider}</span>
+                      )}
+                      {transaction.notes && (
+                        <span>• {transaction.notes}</span>
                       )}
                     </div>
                   </div>
